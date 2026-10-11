@@ -410,3 +410,14 @@ else:
             res_df.to_csv(RESPONSES_FILE, index=False, encoding="utf-8-sig")
 
         st.success("تم حفظ إجابات المدرس بنجاح. شكراً لمشاركتك القيمة!")
+ # --- زر تنزيل النتائج المجمعة ---
+    st.markdown("---")
+    if os.path.exists('teachers_responses.csv'):
+        with open('teachers_responses.csv', 'rb') as f:
+            st.download_button(
+                label="📥 تنزيل ملف استجابات المعلمين (CSV)",
+                data=f,
+                file_name="teachers_responses.csv",
+                mime="text/csv",
+                key="download_csv_btn"
+            )
