@@ -8,8 +8,8 @@ Educational XAI Decision Support System (EDSS) - Streamlit Application
 import os
 import random
 import matplotlib.pyplot as plt
-import pandas as pd
 import numpy as np
+import pandas as pd
 import streamlit as st
 
 # -------------------------------------------------------------
@@ -19,45 +19,73 @@ st.set_page_config(
     page_title="منصة التقييم والتنبؤ الأكاديمي (EDSS)",
     page_icon="🎓",
     layout="wide",
-    initial_sidebar_state="collapsed"
+    initial_sidebar_state="collapsed",
 )
 
 # -------------------------------------------------------------
-# CSS مخصص بألوان مريحة للعين وهادئة لجميع الأزرار والعناصر ومتجاوب مع الهاتف
+# CSS مخصص متجاوب مع الهواتف ومخفي لشريط وشارات Streamlit
 # -------------------------------------------------------------
 st.markdown(
     """
     <style>
-    /* الاتجاه والخطوط العامة والتوافق مع الهواتف الذكية */
+    /* 1. إخفاء شارة Hosted with Streamlit والهيدر والتذييل والقوائم نهائياً */
+    #MainMenu {visibility: hidden !important;}
+    header {visibility: hidden !important;}
+    footer {visibility: hidden !important;}
+    [data-testid="stHeader"] {display: none !important;}
+    [data-testid="stFooter"] {display: none !important;}
+    [data-testid="stToolbar"] {display: none !important;}
+    [data-testid="stDecoration"] {display: none !important;}
+    div[class*="viewerBadge"] {display: none !important;}
+    div[class*="stAppHeader"] {display: none !important;}
+
+    /* 2. الاتجاه والخطوط العامة والتوافق مع اللغة العربية */
     html, body, [class*="css"], div, p, span, h1, h2, h3, h4, h5, h6, label {
         direction: rtl;
         text-align: right;
         font-family: 'Cairo', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        word-break: keep-all !important;
+        word-break: normal !important;
+        white-space: normal !important;
         writing-mode: horizontal-tb !important;
     }
 
-    /* تحسين العرض والتجاوب للشاشات الصغيرة والهواتف */
+    /* 3. إصلاح التجاوب مع الشاشات الصغيرة وتصفية الخط الأسود والتكسر العمودي */
     @media (max-width: 768px) {
         .block-container {
             padding-left: 0.8rem !important;
             padding-right: 0.8rem !important;
             padding-top: 1rem !important;
         }
+        /* تحويل الأعمدة المزدوجة للتتابع الرأسي على الهواتف منعاً للانضغاط */
         [data-testid="stHorizontalBlock"] {
             flex-direction: column !important;
+            gap: 12px !important;
         }
         [data-testid="column"] {
             width: 100% !important;
             flex: 1 1 100% !important;
+            min-width: 100% !important;
+            margin-bottom: 8px !important;
+        }
+        /* تحويل الحدود الجانبية لعلوية لمنع ظهور خط رأسي بالمنتصف */
+        .instructions-card, .scale-guide-box {
+            border-right: none !important;
+            border-top: 5px solid #2b6cb0 !important;
+            padding: 15px !important;
+        }
+        .metric-value {
+            font-size: 26px !important;
+        }
+        .metric-title {
+            font-size: 15px !important;
         }
         div.stButton > button, div.stFormSubmitButton > button {
             font-size: 17px !important;
-            padding: 10px 18px !important;
+            padding: 10px 16px !important;
         }
     }
     
-    /* 1. تنسيق موحد لجميع أزرار المنصة بألوان مريحة وهادئة */
+    /* 4. تنسيق موحد لجميع أزرار المنصة بألوان مريحة وهادئة */
     div.stButton > button, div.stFormSubmitButton > button {
         font-weight: 800 !important;
         font-size: 19px !important;
@@ -71,7 +99,7 @@ st.markdown(
         opacity: 0.92 !important;
     }
 
-    /* 2. زر الشاشة الأولى الرئيسي (أوافق وابدأ تقييم الطلاب) - أزرق مريح مهدئ */
+    /* 5. زر الشاشة الأولى الرئيسي - أزرق مريح مهدئ */
     div[class*="st-key-start_btn"] button, button[data-testid="baseButton-primary"] {
         background-color: #3182CE !important;
         color: #ffffff !important;
@@ -80,7 +108,7 @@ st.markdown(
         box-shadow: 0px 4px 12px rgba(49, 130, 206, 0.25) !important;
     }
 
-    /* 3. زر أوافق على قرار النظام (أخضر زمردي ناعم ومريح للعين) */
+    /* 6. زر أوافق على قرار النظام - أخضر زمردي ناعم */
     div[class*="st-key-agree"] button, button[aria-label*="أوافق"] {
         background-color: #38A169 !important;
         color: #ffffff !important;
@@ -89,7 +117,7 @@ st.markdown(
         width: 100% !important;
     }
 
-    /* 4. زر أعدل القرار (أحمر مرجاني ناعم غير مزعج للعين) */
+    /* 7. زر أعدل القرار - أحمر مرجاني ناعم غير مزعج */
     div[class*="st-key-edit"] button, button[aria-label*="أعدل"] {
         background-color: #E53E3E !important;
         color: #ffffff !important;
@@ -98,7 +126,7 @@ st.markdown(
         width: 100% !important;
     }
 
-    /* 5. زر إرسال الاستبيان النهائي في الشاشة الأخيرة */
+    /* 8. زر إرسال الاستبيان النهائي */
     div.stFormSubmitButton > button {
         background-color: #3182CE !important;
         color: #ffffff !important;
@@ -142,13 +170,13 @@ st.markdown(
         box-shadow: 0 2px 4px rgba(0,0,0,0.02);
     }
     .metric-title {
-        font-size: 18px !important;
+        font-size: 17px !important;
         color: #4a5568 !important;
         font-weight: bold !important;
         margin-bottom: 5px;
     }
     .metric-value {
-        font-size: 34px !important;
+        font-size: 32px !important;
         color: #2b6cb0 !important;
         font-weight: 800 !important;
     }
@@ -159,7 +187,7 @@ st.markdown(
         color: #c53030;
         padding: 12px 20px;
         border-radius: 10px;
-        font-size: 20px;
+        font-size: 19px;
         font-weight: bold;
         text-align: center;
         border: 1px solid #feb2b2;
@@ -169,7 +197,7 @@ st.markdown(
         color: #276749;
         padding: 12px 20px;
         border-radius: 10px;
-        font-size: 20px;
+        font-size: 19px;
         font-weight: bold;
         text-align: center;
         border: 1px solid #9ae6b4;
@@ -187,11 +215,11 @@ st.markdown(
     .scale-guide-title {
         color: #c05621;
         font-weight: 800;
-        font-size: 19px;
+        font-size: 18px;
         margin-bottom: 6px;
     }
     .scale-guide-text {
-        font-size: 17px;
+        font-size: 16px;
         font-weight: 700;
         color: #7b341e;
         margin: 0;
@@ -265,10 +293,10 @@ if "survey_submitted" not in st.session_state:
 # -------------------------------------------------------------
 if not st.session_state.consent:
     st.title("دراسة تجريبية: تقييم قرارات الذكاء الاصطناعي في التعليم")
-    
+
     st.info(
-        "هدف الدراسة: قياس مدى قدرة المدرس على تقييم توصيات الذكاء"
-        " الاصطناعي واكتشاف الأخطاء إن وجدت."
+        "هدف الدراسة: قياس مدى قدرة المدرس على تقييم توصيات الذكاء الاصطناعي"
+        " واكتشاف الأخطاء إن وجدت."
     )
 
     st.markdown(
@@ -311,7 +339,12 @@ if not st.session_state.consent:
         )
 
     st.markdown("<br>", unsafe_allow_html=True)
-    if st.button("أوافق وابدأ تقييم الطلاب", type="primary", key="start_btn", use_container_width=True):
+    if st.button(
+        "أوافق وابدأ تقييم الطلاب",
+        type="primary",
+        key="start_btn",
+        use_container_width=True,
+    ):
         st.session_state.consent = True
         st.session_state.exp_years = exp_years
         st.session_state.subject = subject
@@ -351,8 +384,8 @@ else:
         student = df_students.iloc[idx]
 
         st.warning(
-            f"الطالب ({idx + 1} من {len(df_students)}): اقرأ أرقام الطالب"
-            " وقارنها بتوصية النظام في اليسار، ثم اتخذ قرارك في الأسفل."
+            f"الطالب ({idx + 1} من {len(df_students)}): اقرأ أرقام الطالب وقارنها"
+            " بتوصية النظام في اليسار، ثم اتخذ قرارك في الأسفل."
         )
 
         col_data, col_ai = st.columns(2)
@@ -364,13 +397,13 @@ else:
             m1, m2 = st.columns(2)
             with m1:
                 st.markdown(
-                    f'<div class="big-metric-box"><div'
+                    '<div class="big-metric-box"><div'
                     ' class="metric-title">التقييم التكويني</div><div'
                     f' class="metric-value">{student["quiz_score"]}%</div></div>',
                     unsafe_allow_html=True,
                 )
                 st.markdown(
-                    f'<div class="big-metric-box"><div'
+                    '<div class="big-metric-box"><div'
                     ' class="metric-title">تسليم الواجبات</div><div'
                     f' class="metric-value">{student["assignments"]}%</div></div>',
                     unsafe_allow_html=True,
@@ -378,13 +411,13 @@ else:
 
             with m2:
                 st.markdown(
-                    f'<div class="big-metric-box"><div'
+                    '<div class="big-metric-box"><div'
                     ' class="metric-title">نسبة الحضور</div><div'
                     f' class="metric-value">{student["attendance_rate"]}%</div></div>',
                     unsafe_allow_html=True,
                 )
                 st.markdown(
-                    f'<div class="big-metric-box"><div'
+                    '<div class="big-metric-box"><div'
                     ' class="metric-title">نشاط المنصة</div><div'
                     f' class="metric-value">{student["platform_activity"]}%</div></div>',
                     unsafe_allow_html=True,
@@ -401,8 +434,8 @@ else:
                     unsafe_allow_html=True,
                 )
                 st.caption(
-                    "معنى التقييم: تشير التنبؤات إلى احتمالية انخفاض تحصيل"
-                    " الطالب وتطلبه تدخلاً."
+                    "معنى التقييم: تشير التنبؤات إلى احتمالية انخفاض تحصيل الطالب"
+                    " وتطلبه تدخلاً."
                 )
             else:
                 st.markdown(
@@ -410,8 +443,7 @@ else:
                     unsafe_allow_html=True,
                 )
                 st.caption(
-                    "معنى التقييم: يسير الطالب بمعدل جيد يتوافق مع متطلبات"
-                    " النجاح."
+                    "معنى التقييم: يسير الطالب بمعدل جيد يتوافق مع متطلبات النجاح."
                 )
 
             st.markdown("<br>", unsafe_allow_html=True)
@@ -419,22 +451,22 @@ else:
             # عرض التفسير المنسق حسب المجموعة
             if group_code == "G1":
                 st.info(
-                    "تنبؤ مباشر: يقدم النظام النتيجة النهائية فقط دون تفاصيل"
-                    " خوارزمية."
+                    "تنبؤ مباشر: يقدم النظام النتيجة النهائية فقط دون تفاصيل خوارزمية."
                 )
 
             elif group_code == "G2":
                 st.subheader("أهمية المؤشرات العامة للنظام")
-                fig, ax = plt.subplots(figsize=(5, 2.2))
+                fig, ax = plt.subplots(figsize=(4.5, 2.2))
                 features = ["التقييم التكويني", "الحضور", "الواجبات", "نشاط المنصة"]
                 importance = [35, 25, 20, 20]
                 ax.barh(features, importance, color="#3182bd")
                 ax.set_xlabel("الأهمية العامة (%)")
+                fig.tight_layout()
                 st.pyplot(fig)
 
             elif group_code == "G3":
                 st.subheader("الشرح التفصيلي لقرار هذا الطالب (SHAP)")
-                fig, ax = plt.subplots(figsize=(5, 2.2))
+                fig, ax = plt.subplots(figsize=(4.5, 2.2))
                 features = ["التقييم التكويني", "الحضور", "الواجبات", "المنصة"]
 
                 vals = [
@@ -448,6 +480,7 @@ else:
                 ax.barh(features, vals, color=colors)
                 ax.axvline(0, color="black", linewidth=1, linestyle="--")
                 ax.set_xlabel("تأثير المؤشر مقارنة بحد النجاح 50%")
+                fig.tight_layout()
                 st.pyplot(fig)
 
                 st.markdown("""
@@ -458,18 +491,26 @@ else:
 
         st.divider()
 
-        # أزرار اتخاذ القرار الملونة والبارزة بألوان هادئة
+        # أزرار اتخاذ القرار الملونة والبارزة
         st.subheader("قرارك التربوي كمدرس:")
         c1, c2 = st.columns(2)
 
         with c1:
-            if st.button("أوافق على قرار النظام", key=f"agree_{idx}", use_container_width=True):
+            if st.button(
+                "أوافق على قرار النظام",
+                key=f"agree_{idx}",
+                use_container_width=True,
+            ):
                 st.session_state.decisions[student["student_id"]] = "أوافق"
                 st.session_state.current_student += 1
                 st.rerun()
 
         with c2:
-            if st.button("أعدل القرار (الذكاء الاصطناعي مخطئ)", key=f"edit_{idx}", use_container_width=True):
+            if st.button(
+                "أعدل القرار (الذكاء الاصطناعي مخطئ)",
+                key=f"edit_{idx}",
+                use_container_width=True,
+            ):
                 st.session_state.decisions[student["student_id"]] = "أعدل"
                 st.session_state.current_student += 1
                 st.rerun()
