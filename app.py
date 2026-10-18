@@ -9,6 +9,7 @@ import os
 import random
 import matplotlib.pyplot as plt
 import pandas as pd
+import numpy as np
 import streamlit as st
 
 # -------------------------------------------------------------
@@ -16,20 +17,44 @@ import streamlit as st
 # -------------------------------------------------------------
 st.set_page_config(
     page_title="منصة التقييم والتنبؤ الأكاديمي (EDSS)",
+    page_icon="🎓",
     layout="wide",
+    initial_sidebar_state="collapsed"
 )
 
 # -------------------------------------------------------------
-# CSS مخصص بألوان مريحة للعين وهادئة لجميع الأزرار والعناصر
+# CSS مخصص بألوان مريحة للعين وهادئة لجميع الأزرار والعناصر ومتجاوب مع الهاتف
 # -------------------------------------------------------------
 st.markdown(
     """
     <style>
-    /* الاتجاه والخطوط العامة */
-    body, div, p, span, h1, h2, h3, h4, h5, h6 {
+    /* الاتجاه والخطوط العامة والتوافق مع الهواتف الذكية */
+    html, body, [class*="css"], div, p, span, h1, h2, h3, h4, h5, h6, label {
         direction: rtl;
         text-align: right;
         font-family: 'Cairo', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        word-break: keep-all !important;
+        writing-mode: horizontal-tb !important;
+    }
+
+    /* تحسين العرض والتجاوب للشاشات الصغيرة والهواتف */
+    @media (max-width: 768px) {
+        .block-container {
+            padding-left: 0.8rem !important;
+            padding-right: 0.8rem !important;
+            padding-top: 1rem !important;
+        }
+        [data-testid="stHorizontalBlock"] {
+            flex-direction: column !important;
+        }
+        [data-testid="column"] {
+            width: 100% !important;
+            flex: 1 1 100% !important;
+        }
+        div.stButton > button, div.stFormSubmitButton > button {
+            font-size: 17px !important;
+            padding: 10px 18px !important;
+        }
     }
     
     /* 1. تنسيق موحد لجميع أزرار المنصة بألوان مريحة وهادئة */
@@ -234,6 +259,7 @@ if "decisions" not in st.session_state:
 if "survey_submitted" not in st.session_state:
     st.session_state.survey_submitted = False
 
+
 # -------------------------------------------------------------
 # 1️⃣ الشاشة الأولى: الموافقة والتعليمات
 # -------------------------------------------------------------
@@ -290,6 +316,7 @@ if not st.session_state.consent:
         st.session_state.exp_years = exp_years
         st.session_state.subject = subject
         st.rerun()
+
 
 # -------------------------------------------------------------
 # 2️⃣ الشاشة الثانية: تقييم الطلاب
