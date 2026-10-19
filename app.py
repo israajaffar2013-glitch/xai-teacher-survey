@@ -23,23 +23,37 @@ st.set_page_config(
 )
 
 # -------------------------------------------------------------
-# CSS مخصص متجاوب مع الهواتف ومخفي لشريط وشارات Streamlit
+# CSS مخصص يزيل نهائياً الخطوط المتحركة والأشرطة العلوية على الهاتف
 # -------------------------------------------------------------
 st.markdown(
     """
     <style>
-    /* 1. إخفاء شارة Hosted with Streamlit والهيدر والتذييل والقوائم نهائياً */
-    #MainMenu {visibility: hidden !important;}
-    header {visibility: hidden !important;}
-    footer {visibility: hidden !important;}
-    [data-testid="stHeader"] {display: none !important;}
-    [data-testid="stFooter"] {display: none !important;}
-    [data-testid="stToolbar"] {display: none !important;}
-    [data-testid="stDecoration"] {display: none !important;}
-    div[class*="viewerBadge"] {display: none !important;}
-    div[class*="stAppHeader"] {display: none !important;}
+    /* 1. إخفاء كافة الأشرطة العلوية والخطوط المتحركة الخاصة بـ Streamlit (Loading Bar & Decoration) */
+    #MainMenu, header, footer {visibility: hidden !important; display: none !important;}
+    [data-testid="stHeader"], [data-testid="stFooter"], [data-testid="stToolbar"], [data-testid="stDecoration"] {
+        display: none !important;
+        visibility: hidden !important;
+        height: 0px !important;
+    }
+    div[class*="viewerBadge"], div[class*="stAppHeader"], [data-testid="stStatusWidget"] {
+        display: none !important;
+    }
+    .stProgress > div > div > div > div {
+        display: none !important;
+    }
+    div[data-baseweb="progress-bar"] {
+        display: none !important;
+    }
 
-    /* 2. الاتجاه والخطوط العامة والتوافق مع اللغة العربية */
+    /* 2. ضبط الفواصل والخطوط الأفقية حتى لا تظهر كمسطرة سوداء متحركة */
+    hr {
+        border: none !important;
+        height: 1px !important;
+        background-color: #E2E8F0 !important;
+        margin: 15px 0 !important;
+    }
+
+    /* 3. الاتجاه والخطوط العامة والتوافق مع اللغة العربية */
     html, body, [class*="css"], div, p, span, h1, h2, h3, h4, h5, h6, label {
         direction: rtl;
         text-align: right;
@@ -49,145 +63,112 @@ st.markdown(
         writing-mode: horizontal-tb !important;
     }
 
-    /* 3. إصلاح التجاوب مع الشاشات الصغيرة وتصفية الخط الأسود والتكسر العمودي */
+    /* 4. إصلاح التجاوب مع الشاشات الصغيرة وتصفية الانضغاط على الجوال */
     @media (max-width: 768px) {
         .block-container {
             padding-left: 0.8rem !important;
             padding-right: 0.8rem !important;
-            padding-top: 1rem !important;
+            padding-top: 0.5rem !important;
         }
-        /* تحويل الأعمدة المزدوجة للتتابع الرأسي على الهواتف منعاً للانضغاط */
         [data-testid="stHorizontalBlock"] {
             flex-direction: column !important;
-            gap: 12px !important;
+            gap: 10px !important;
         }
         [data-testid="column"] {
             width: 100% !important;
             flex: 1 1 100% !important;
             min-width: 100% !important;
-            margin-bottom: 8px !important;
+            margin-bottom: 6px !important;
         }
-        /* تحويل الحدود الجانبية لعلوية لمنع ظهور خط رأسي بالمنتصف */
         .instructions-card, .scale-guide-box {
             border-right: none !important;
-            border-top: 5px solid #2b6cb0 !important;
-            padding: 15px !important;
+            border-top: 4px solid #2b6cb0 !important;
+            padding: 14px !important;
         }
         .metric-value {
-            font-size: 26px !important;
+            font-size: 24px !important;
         }
         .metric-title {
-            font-size: 15px !important;
+            font-size: 14px !important;
         }
         div.stButton > button, div.stFormSubmitButton > button {
-            font-size: 17px !important;
-            padding: 10px 16px !important;
+            font-size: 16px !important;
+            padding: 10px 14px !important;
         }
     }
     
-    /* 4. تنسيق موحد لجميع أزرار المنصة بألوان مريحة وهادئة */
+    /* 5. تنسيق الأزرار */
     div.stButton > button, div.stFormSubmitButton > button {
         font-weight: 800 !important;
-        font-size: 19px !important;
+        font-size: 18px !important;
         border-radius: 10px !important;
-        padding: 12px 24px !important;
+        padding: 12px 20px !important;
         border: none !important;
-        transition: all 0.25s ease-in-out !important;
-    }
-    div.stButton > button:hover, div.stFormSubmitButton > button:hover {
-        transform: translateY(-2px) !important;
-        opacity: 0.92 !important;
+        transition: all 0.2s ease-in-out !important;
     }
 
-    /* 5. زر الشاشة الأولى الرئيسي - أزرق مريح مهدئ */
     div[class*="st-key-start_btn"] button, button[data-testid="baseButton-primary"] {
         background-color: #3182CE !important;
         color: #ffffff !important;
-        font-size: 20px !important;
         width: 100% !important;
-        box-shadow: 0px 4px 12px rgba(49, 130, 206, 0.25) !important;
     }
 
-    /* 6. زر أوافق على قرار النظام - أخضر زمردي ناعم */
-    div[class*="st-key-agree"] button, button[aria-label*="أوافق"] {
+    div[class*="st-key-agree"] button {
         background-color: #38A169 !important;
         color: #ffffff !important;
-        font-size: 20px !important;
-        box-shadow: 0px 4px 12px rgba(56, 161, 105, 0.25) !important;
         width: 100% !important;
     }
 
-    /* 7. زر أعدل القرار - أحمر مرجاني ناعم غير مزعج */
-    div[class*="st-key-edit"] button, button[aria-label*="أعدل"] {
+    div[class*="st-key-edit"] button {
         background-color: #E53E3E !important;
         color: #ffffff !important;
-        font-size: 20px !important;
-        box-shadow: 0px 4px 12px rgba(229, 62, 62, 0.25) !important;
         width: 100% !important;
     }
 
-    /* 8. زر إرسال الاستبيان النهائي */
-    div.stFormSubmitButton > button {
-        background-color: #3182CE !important;
-        color: #ffffff !important;
-        font-size: 20px !important;
-        width: 100% !important;
-        box-shadow: 0px 4px 12px rgba(49, 130, 206, 0.25) !important;
-    }
-
-    /* بطاقة التعليمات في الشاشة الأولى */
     .instructions-card {
         background-color: #f7fafc;
         border-right: 5px solid #2b6cb0;
-        padding: 20px 25px;
+        padding: 18px;
         border-radius: 10px;
-        margin-top: 15px;
-        margin-bottom: 25px;
-        box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+        margin-bottom: 20px;
     }
     .instructions-title {
         color: #2b6cb0;
-        font-size: 21px !important;
+        font-size: 20px !important;
         font-weight: 800 !important;
-        margin-bottom: 12px !important;
+        margin-bottom: 10px !important;
     }
     .instructions-list {
-        font-size: 17px !important;
+        font-size: 16px !important;
         color: #2d3748 !important;
-        line-height: 1.9 !important;
-        margin: 0 !important;
-        padding-right: 20px !important;
+        line-height: 1.8 !important;
     }
     
-    /* بطاقات المؤشرات الرقمية للطلاب */
     .big-metric-box {
         background-color: #ffffff;
         border: 1px solid #e2e8f0;
-        border-radius: 12px;
-        padding: 15px;
+        border-radius: 10px;
+        padding: 12px;
         text-align: center;
-        margin-bottom: 15px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+        margin-bottom: 10px;
     }
     .metric-title {
-        font-size: 17px !important;
+        font-size: 16px !important;
         color: #4a5568 !important;
         font-weight: bold !important;
-        margin-bottom: 5px;
     }
     .metric-value {
-        font-size: 32px !important;
+        font-size: 30px !important;
         color: #2b6cb0 !important;
         font-weight: 800 !important;
     }
     
-    /* شارات التنبؤ الناعمة */
     .status-badge-red {
         background-color: #fff5f5;
         color: #c53030;
-        padding: 12px 20px;
-        border-radius: 10px;
-        font-size: 19px;
+        padding: 10px 16px;
+        border-radius: 8px;
+        font-size: 18px;
         font-weight: bold;
         text-align: center;
         border: 1px solid #feb2b2;
@@ -195,64 +176,37 @@ st.markdown(
     .status-badge-green {
         background-color: #f0fff4;
         color: #276749;
-        padding: 12px 20px;
-        border-radius: 10px;
-        font-size: 19px;
+        padding: 10px 16px;
+        border-radius: 8px;
+        font-size: 18px;
         font-weight: bold;
         text-align: center;
         border: 1px solid #9ae6b4;
     }
     
-    /* الشريط التوضيحي الناعم لمقياس 1 إلى 5 */
     .scale-guide-box {
         background-color: #fffaf0;
         border: 1px solid #fbd38d;
-        border-right: 6px solid #dd6b20;
-        padding: 16px 20px;
+        border-right: 5px solid #dd6b20;
+        padding: 14px;
         border-radius: 10px;
-        margin-bottom: 22px;
-    }
-    .scale-guide-title {
-        color: #c05621;
-        font-weight: 800;
-        font-size: 18px;
-        margin-bottom: 6px;
-    }
-    .scale-guide-text {
-        font-size: 16px;
-        font-weight: 700;
-        color: #7b341e;
-        margin: 0;
-        line-height: 1.8;
+        margin-bottom: 20px;
     }
     </style>
 """,
     unsafe_allow_html=True,
 )
 
-CSV_FILE = "student_profiles.csv"
 RESPONSES_FILE = "teachers_responses.csv"
 
-
 # -------------------------------------------------------------
-# تحميل بيانات الطلاب الاصطناعية (10 طلاب متضمنة فخاخ الاكتشاف S03, S06, S09)
+# تحميل بيانات الطلاب الاصطناعية (10 طلاب)
 # -------------------------------------------------------------
 @st.cache_data
 def load_students():
     data = {
         "student_id": [f"S{i:02d}" for i in range(1, 11)],
-        "name": [
-            "طالب 1",
-            "طالب 2",
-            "طالب 3",
-            "طالب 4",
-            "طالب 5",
-            "طالب 6",
-            "طالب 7",
-            "طالب 8",
-            "طالب 9",
-            "طالب 10",
-        ],
+        "name": [f"طالب {i}" for i in range(1, 11)],
         "quiz_score": [85, 40, 92, 78, 35, 42, 88, 30, 95, 82],
         "attendance_rate": [90, 50, 95, 85, 45, 50, 90, 40, 98, 85],
         "assignments": [88, 45, 90, 80, 40, 48, 85, 35, 92, 80],
@@ -260,18 +214,17 @@ def load_students():
         "ai_prediction": [
             "مستقر أكاديمياً",
             "معرض للتعثر الأكاديمي",
-            "معرض للتعثر الأكاديمي",  # متناقض (طالب ممتاز والنظام يصنفه تعثر)
+            "معرض للتعثر الأكاديمي",  # فخ
             "مستقر أكاديمياً",
             "معرض للتعثر الأكاديمي",
-            "مستقر أكاديمياً",  # متناقض (طالب ضعيف والنظام يصنفه مستقر)
+            "مستقر أكاديمياً",  # فخ
             "مستقر أكاديمياً",
             "معرض للتعثر الأكاديمي",
-            "معرض للتعثر الأكاديمي",  # متناقض (طالب ممتاز والنظام يصنفه تعثر)
+            "معرض للتعثر الأكاديمي",  # فخ
             "مستقر أكاديمياً",
         ],
     }
     return pd.DataFrame(data)
-
 
 df_students = load_students()
 
@@ -287,17 +240,13 @@ if "decisions" not in st.session_state:
 if "survey_submitted" not in st.session_state:
     st.session_state.survey_submitted = False
 
-
 # -------------------------------------------------------------
 # 1️⃣ الشاشة الأولى: الموافقة والتعليمات
 # -------------------------------------------------------------
 if not st.session_state.consent:
     st.title("دراسة تجريبية: تقييم قرارات الذكاء الاصطناعي في التعليم")
 
-    st.info(
-        "هدف الدراسة: قياس مدى قدرة المدرس على تقييم توصيات الذكاء الاصطناعي"
-        " واكتشاف الأخطاء إن وجدت."
-    )
+    st.info("هدف الدراسة: قياس مدى قدرة المدرس على تقييم توصيات الذكاء الاصطناعي واكتشاف الأخطاء إن وجدت.")
 
     st.markdown(
         """
@@ -318,12 +267,9 @@ if not st.session_state.consent:
         unsafe_allow_html=True,
     )
 
-    st.divider()
     col1, col2 = st.columns(2)
     with col1:
-        exp_years = st.number_input(
-            "سنوات الخبرة في التدريس:", min_value=0, max_value=40, value=5
-        )
+        exp_years = st.number_input("سنوات الخبرة في التدريس:", min_value=0, max_value=40, value=5)
     with col2:
         subject = st.selectbox(
             "التخصص / المادة الدراسية:",
@@ -339,23 +285,16 @@ if not st.session_state.consent:
         )
 
     st.markdown("<br>", unsafe_allow_html=True)
-    if st.button(
-        "أوافق وابدأ تقييم الطلاب",
-        type="primary",
-        key="start_btn",
-        use_container_width=True,
-    ):
+    if st.button("أوافق وابدأ تقييم الطلاب", type="primary", key="start_btn", use_container_width=True):
         st.session_state.consent = True
         st.session_state.exp_years = exp_years
         st.session_state.subject = subject
         st.rerun()
 
-
 # -------------------------------------------------------------
 # 2️⃣ الشاشة الثانية: تقييم الطلاب
 # -------------------------------------------------------------
 else:
-    # شريط المعاينة جانبي للباحث
     with st.sidebar:
         st.subheader("خيارات المعاينة")
         st.session_state.group = st.radio(
@@ -369,7 +308,6 @@ else:
             index=["G1", "G2", "G3"].index(st.session_state.group),
         )
 
-        st.divider()
         if st.button("إعادة بدء التجربة من البداية"):
             st.session_state.consent = False
             st.session_state.current_student = 0
@@ -383,76 +321,55 @@ else:
     if idx < len(df_students):
         student = df_students.iloc[idx]
 
-        st.warning(
-            f"الطالب ({idx + 1} من {len(df_students)}): اقرأ أرقام الطالب وقارنها"
-            " بتوصية النظام في اليسار، ثم اتخذ قرارك في الأسفل."
+        # شارة نصية أنيقة بدلاً من شريط التقدم الرسومي لتفادي أي خط أسود على الهواتف
+        st.markdown(
+            f'<div style="background-color: #E2E8F0; padding: 6px 12px; border-radius: 6px; font-weight: bold; color: #2D3748; margin-bottom: 12px; text-align: center;">🎯 التقدم: الطالب ({idx + 1} من {len(df_students)})</div>',
+            unsafe_allow_html=True
         )
+
+        st.warning(f"اقرأ أرقام الطالب وقارنها بتوصية النظام، ثم اتخذ قرارك في الأسفل.")
 
         col_data, col_ai = st.columns(2)
 
-        # العمود الأول: سجل الطالب بأرقام بارزة
         with col_data:
             st.subheader(f"سجل الطالب: {student['name']}")
 
             m1, m2 = st.columns(2)
             with m1:
                 st.markdown(
-                    '<div class="big-metric-box"><div'
-                    ' class="metric-title">التقييم التكويني</div><div'
-                    f' class="metric-value">{student["quiz_score"]}%</div></div>',
+                    f'<div class="big-metric-box"><div class="metric-title">التقييم التكويني</div><div class="metric-value">{student["quiz_score"]}%</div></div>',
                     unsafe_allow_html=True,
                 )
                 st.markdown(
-                    '<div class="big-metric-box"><div'
-                    ' class="metric-title">تسليم الواجبات</div><div'
-                    f' class="metric-value">{student["assignments"]}%</div></div>',
+                    f'<div class="big-metric-box"><div class="metric-title">تسليم الواجبات</div><div class="metric-value">{student["assignments"]}%</div></div>',
                     unsafe_allow_html=True,
                 )
 
             with m2:
                 st.markdown(
-                    '<div class="big-metric-box"><div'
-                    ' class="metric-title">نسبة الحضور</div><div'
-                    f' class="metric-value">{student["attendance_rate"]}%</div></div>',
+                    f'<div class="big-metric-box"><div class="metric-title">نسبة الحضور</div><div class="metric-value">{student["attendance_rate"]}%</div></div>',
                     unsafe_allow_html=True,
                 )
                 st.markdown(
-                    '<div class="big-metric-box"><div'
-                    ' class="metric-title">نشاط المنصة</div><div'
-                    f' class="metric-value">{student["platform_activity"]}%</div></div>',
+                    f'<div class="big-metric-box"><div class="metric-title">نشاط المنصة</div><div class="metric-value">{student["platform_activity"]}%</div></div>',
                     unsafe_allow_html=True,
                 )
 
-        # العمود الثاني: تقييم وتفسير الذكاء الاصطناعي
         with col_ai:
             st.subheader("تقييم وتنبؤ الذكاء الاصطناعي")
             pred_status = student["ai_prediction"]
 
             if "تعثر" in pred_status or "خطر" in pred_status:
-                st.markdown(
-                    f'<div class="status-badge-red">{pred_status}</div>',
-                    unsafe_allow_html=True,
-                )
-                st.caption(
-                    "معنى التقييم: تشير التنبؤات إلى احتمالية انخفاض تحصيل الطالب"
-                    " وتطلبه تدخلاً."
-                )
+                st.markdown(f'<div class="status-badge-red">{pred_status}</div>', unsafe_allow_html=True)
+                st.caption("معنى التقييم: تشير التنبؤات إلى احتمالية انخفاض تحصيل الطالب وتطلبه تدخلاً.")
             else:
-                st.markdown(
-                    f'<div class="status-badge-green">{pred_status}</div>',
-                    unsafe_allow_html=True,
-                )
-                st.caption(
-                    "معنى التقييم: يسير الطالب بمعدل جيد يتوافق مع متطلبات النجاح."
-                )
+                st.markdown(f'<div class="status-badge-green">{pred_status}</div>', unsafe_allow_html=True)
+                st.caption("معنى التقييم: يسير الطالب بمعدل جيد يتوافق مع متطلبات النجاح.")
 
             st.markdown("<br>", unsafe_allow_html=True)
 
-            # عرض التفسير المنسق حسب المجموعة
             if group_code == "G1":
-                st.info(
-                    "تنبؤ مباشر: يقدم النظام النتيجة النهائية فقط دون تفاصيل خوارزمية."
-                )
+                st.info("تنبؤ مباشر: يقدم النظام النتيجة النهائية فقط دون تفاصيل خوارزمية.")
 
             elif group_code == "G2":
                 st.subheader("أهمية المؤشرات العامة للنظام")
@@ -489,28 +406,17 @@ else:
                 * **العمود الأحمر (-):** أداء أدنى من حد النجاح (50%) يرفع احتمالية التعثر.
                 """)
 
-        st.divider()
-
-        # أزرار اتخاذ القرار الملونة والبارزة
         st.subheader("قرارك التربوي كمدرس:")
         c1, c2 = st.columns(2)
 
         with c1:
-            if st.button(
-                "أوافق على قرار النظام",
-                key=f"agree_{idx}",
-                use_container_width=True,
-            ):
+            if st.button("أوافق على قرار النظام", key=f"agree_{idx}", use_container_width=True):
                 st.session_state.decisions[student["student_id"]] = "أوافق"
                 st.session_state.current_student += 1
                 st.rerun()
 
         with c2:
-            if st.button(
-                "أعدل القرار (الذكاء الاصطناعي مخطئ)",
-                key=f"edit_{idx}",
-                use_container_width=True,
-            ):
+            if st.button("أعدل القرار (الذكاء الاصطناعي مخطئ)", key=f"edit_{idx}", use_container_width=True):
                 st.session_state.decisions[student["student_id"]] = "أعدل"
                 st.session_state.current_student += 1
                 st.rerun()
@@ -522,17 +428,12 @@ else:
         st.success("أكملت تقييم الطلاب الـ 10 بنجاح.")
         st.subheader("الاستبيان النهائي (3 دقائق):")
 
-        # الشريط التوضيحي الناعم المريح لمقياس الإجابة من 1 إلى 5
         st.markdown(
             """
             <div class="scale-guide-box">
-                <div class="scale-guide-title">دليل التقييم من 1 إلى 5 لمعلم الدراسة:</div>
-                <div class="scale-guide-text">
-                    1 = غير موافق بشدة &nbsp;|&nbsp; 
-                    2 = غير موافق &nbsp;|&nbsp; 
-                    3 = محايد &nbsp;|&nbsp; 
-                    4 = موافق &nbsp;|&nbsp; 
-                    5 = موافق بشدة
+                <div style="color: #c05621; font-weight: 800; font-size: 17px; margin-bottom: 4px;">دليل التقييم من 1 إلى 5 لمعلم الدراسة:</div>
+                <div style="font-size: 15px; font-weight: 700; color: #7b341e; margin: 0; line-height: 1.8;">
+                    1 = غير موافق بشدة &nbsp;|&nbsp; 2 = غير موافق &nbsp;|&nbsp; 3 = محايد &nbsp;|&nbsp; 4 = موافق &nbsp;|&nbsp; 5 = موافق بشدة
                 </div>
             </div>
             """,
@@ -542,55 +443,26 @@ else:
         if not st.session_state.survey_submitted:
             with st.form("survey_form"):
                 st.markdown("#### وضوح الشرح والشفافية")
-                ait1 = st.slider(
-                    "1. كان الشرح المقدم من النظام واضحاً وسهل الفهم:", 1, 5, 3
-                )
-                ait2 = st.slider(
-                    "2. ساعدني الشرح على معرفة سبب اتخاذ النظام لهذا القرار:", 1, 5, 3
-                )
+                ait1 = st.slider("1. كان الشرح المقدم من النظام واضحاً وسهل الفهم:", 1, 5, 3)
+                ait2 = st.slider("2. ساعدني الشرح على معرفة سبب اتخاذ النظام لهذا القرار:", 1, 5, 3)
 
                 st.markdown("#### الثقة والقدرة على الاكتشاف")
-                tr1 = st.slider(
-                    "1. أثق في القرارات التي يقدمها هذا النظام كإرشادات مساندة:", 1, 5, 3
-                )
-                tr2 = st.slider(
-                    "2. شعرت بالتأكد عند اتخاذ قرار بتعديل أو موافقة رأي النظام:",
-                    1,
-                    5,
-                    3,
-                )
+                tr1 = st.slider("1. أثق في القرارات التي يقدمها هذا النظام كإرشادات مساندة:", 1, 5, 3)
+                tr2 = st.slider("2. شعرت بالتأكد عند اتخاذ قرار بتعديل أو موافقة رأي النظام:", 1, 5, 3)
 
                 submitted = st.form_submit_button("إرسال نتائج التجربة")
 
                 if submitted:
-                    # 1. حساب نسبة اكتشاف البطاقات المغلوطة (S03, S06, S09)
-                    trap_correct = 0
-                    for trap_id in ["S03", "S06", "S09"]:
-                        if st.session_state.decisions.get(trap_id) == "أعدل":
-                            trap_correct += 1
+                    trap_correct = sum(1 for trap_id in ["S03", "S06", "S09"] if st.session_state.decisions.get(trap_id) == "أعدل")
                     trap_detection_score = round((trap_correct / 3) * 100, 2)
 
-                    # 2. حساب الدقة الكلية عبر كافة الطلاب الـ 10
                     correct_answers = {
-                        "S01": "أوافق",
-                        "S02": "أوافق",
-                        "S03": "أعدل",
-                        "S04": "أوافق",
-                        "S05": "أوافق",
-                        "S06": "أعدل",
-                        "S07": "أوافق",
-                        "S08": "أوافق",
-                        "S09": "أعدل",
-                        "S10": "أوافق",
+                        "S01": "أوافق", "S02": "أوافق", "S03": "أعدل", "S04": "أوافق", "S05": "أوافق",
+                        "S06": "أعدل", "S07": "أوافق", "S08": "أوافق", "S09": "أعدل", "S10": "أوافق",
                     }
-                    total_correct = sum(
-                        1
-                        for sid, c_dec in correct_answers.items()
-                        if st.session_state.decisions.get(sid) == c_dec
-                    )
+                    total_correct = sum(1 for sid, c_dec in correct_answers.items() if st.session_state.decisions.get(sid) == c_dec)
                     total_accuracy = round((total_correct / 10) * 100, 2)
 
-                    # 3. بناء الصف الشامل للاستجابة
                     res_data = {
                         "exp_years": [st.session_state.get("exp_years", 0)],
                         "subject": [st.session_state.get("subject", "")],
@@ -612,15 +484,8 @@ else:
                     }
                     res_df = pd.DataFrame(res_data)
 
-                    # حفظ البيانات في ملف CSV بتشفير utf-8-sig لدعم اللغة العربية في Excel
                     if os.path.exists(RESPONSES_FILE):
-                        res_df.to_csv(
-                            RESPONSES_FILE,
-                            mode="a",
-                            header=False,
-                            index=False,
-                            encoding="utf-8-sig",
-                        )
+                        res_df.to_csv(RESPONSES_FILE, mode="a", header=False, index=False, encoding="utf-8-sig")
                     else:
                         res_df.to_csv(RESPONSES_FILE, index=False, encoding="utf-8-sig")
 
@@ -630,12 +495,9 @@ else:
         else:
             st.info("شكراً جزيلاً لمشاركتكم ووقتكم في دعم هذه الدراسة العلمية.")
 
-        # --- زر تنزيل النتائج المجمعة (خاص بالباحثة فقط بكلمة سر) ---
         st.markdown("<br><hr>", unsafe_allow_html=True)
         with st.expander("لوحة تحميل البيانات (خاص بالباحثة فقط)"):
-            pwd = st.text_input(
-                "أدخلي رمز الدخول الخاص بالباحثة:", type="password", key="admin_pwd"
-            )
+            pwd = st.text_input("أدخلي رمز الدخول الخاص بالباحثة:", type="password", key="admin_pwd")
             if pwd == "1234":
                 st.success("تم التحقق بنجاح")
                 if os.path.exists(RESPONSES_FILE):
