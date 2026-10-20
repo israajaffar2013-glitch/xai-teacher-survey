@@ -27,7 +27,6 @@ st.set_page_config(
 st.markdown(
     """
     <style>
-    /* إخفاء الترويسة والتذييل غير الضروريين */
     #MainMenu, header, footer {
         visibility: hidden !important;
         display: none !important;
@@ -36,14 +35,12 @@ st.markdown(
         display: none !important;
     }
 
-    /* الاتجاه والتنسيق العربي المعتمد أكاديمياً */
     html, body, [class*="css"], div, p, span, h1, h2, h3, h4, h5, h6, label {
         direction: rtl !important;
         text-align: right !important;
         font-family: 'Cairo', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif !important;
     }
 
-    /* تنسيق بطاقات البيانات المعيارية */
     .metric-box {
         background-color: #FFFFFF;
         border: 1px solid #E2E8F0;
@@ -64,7 +61,6 @@ st.markdown(
         font-weight: 800;
     }
 
-    /* أوسمة الحالة أكاديمية الشكل */
     .status-badge-red {
         background-color: #FFF5F5;
         color: #9B2C2C;
@@ -94,7 +90,6 @@ st.markdown(
         margin-bottom: 16px;
     }
 
-    /* أزرار القرار المنسقة بشكل رسمي */
     div.stButton > button {
         font-weight: 800 !important;
         font-size: 18px !important;
@@ -123,7 +118,7 @@ st.markdown(
 RESPONSES_FILE = "teachers_responses.csv"
 
 # -------------------------------------------------------------
-# بيانات الطلاب الاصطناعية (10 طلاب مع فخاخ الاكتشاف)
+# بيانات الطلاب الاصطناعية (أسماء حيادية دون الإفصاح عن الفخ)
 # -------------------------------------------------------------
 STUDENTS_DATA = [
     {
@@ -135,7 +130,8 @@ STUDENTS_DATA = [
         "platform_activity": 88,
         "ai_prediction": "مستقر أكاديمياً",
         "is_trap": False,
-        "shap_explanation": "درجة التقييم التكويني (85%) ونسبة الحضور الممتازة (95%) هما المساهم الأكبر في تصنيف الطالب كمستقر أكاديمياً (+35% فوق حد الخطر).",
+        "contributions": {"التقييم التكويني": 35, "نسبة الحضور": 30, "الواجبات": 20, "نشاط المنصة": 15},
+        "shap_text": "مساهمة إيجابية مرتفعة لدرجة التقييم التكويني الحالية (85%) والحضور الممتاز (95%) تدعم استقرار مستوى الطالب.",
         "ground_truth": "أوافق"
     },
     {
@@ -147,19 +143,21 @@ STUDENTS_DATA = [
         "platform_activity": 35,
         "ai_prediction": "معرض للتعثر الأكاديمي",
         "is_trap": False,
-        "shap_explanation": "انخفاض درجة التقييم التكويني (42%) وضعف نشاط المنصة (35%) هما السبب الرئيسي في تنبؤ النظام بالتعثر الأكاديمي (-18% دون حد الأمان).",
+        "contributions": {"التقييم التكويني": -28, "نشاط المنصة": -22, "نسبة الحضور": -15, "الواجبات": -10},
+        "shap_text": "انخفاض التقييم التكويني (42%) وضعف النشاط بالمنصة (35%) هما المساهمان الأكبر في التنبؤ بالتعثر الأكاديمي.",
         "ground_truth": "أوافق"
     },
     {
         "id": "S03",
-        "name": "الطالب (03) [فخ تجريبي]",
+        "name": "الطالب (03)",
         "formative_score": 30,
         "assignments": 25,
         "attendance_rate": 40,
         "platform_activity": 20,
         "ai_prediction": "مستقر أكاديمياً",
         "is_trap": True,
-        "shap_explanation": "توصية النظام خاطئة ومناقضة للبيانات: جميع مؤشرات الطالب حادة وفي النطاق الأحمر (التقييم 30% والواجبات 25%)، مما يتطلب تعديل القرار.",
+        "contributions": {"نشاط المنصة": 40, "نسبة الحضور": 25, "الواجبات": 15, "التقييم التكويني": 10},
+        "shap_text": "يشير التفسير الداخلي للنظام إلى اعتماد التوصية بالاستقرار على مؤشرات تفاعل المنصة.",
         "ground_truth": "أعدل"
     },
     {
@@ -171,7 +169,8 @@ STUDENTS_DATA = [
         "platform_activity": 80,
         "ai_prediction": "مستقر أكاديمياً",
         "is_trap": False,
-        "shap_explanation": "تسليم الواجبات بانتظام (82%) مع نسبة الحضور (88%) يدعمان تنبؤ النظام باستقرار مستوى الطالب.",
+        "contributions": {"تسليم الواجبات": 30, "نسبة الحضور": 28, "التقييم التكويني": 22, "نشاط المنصة": 20},
+        "shap_text": "الانتظام في تسليم الواجبات (82%) مع نسبة الحضور (88%) يسهمان بشكل رئيسي في التوصية بالاستقرار.",
         "ground_truth": "أوافق"
     },
     {
@@ -183,19 +182,21 @@ STUDENTS_DATA = [
         "platform_activity": 40,
         "ai_prediction": "معرض للتعثر الأكاديمي",
         "is_trap": False,
-        "shap_explanation": "تقارب المؤشرات من خط التعثر الحرج (التقييم 48% والواجبات 45%) أدى لنقل الطالب لقائمة التنبؤ بالخطر.",
+        "contributions": {"التقييم التكويني": -20, "الواجبات": -18, "نسبة الحضور": -12, "نشاط المنصة": -10},
+        "shap_text": "تقارب نتائج التقييم التكويني (48%) والواجبات (45%) من الحد الحرج ينقل الطالب لفئة خطر التعثر.",
         "ground_truth": "أوافق"
     },
     {
         "id": "S06",
-        "name": "الطالب (06) [فخ تجريبي]",
+        "name": "الطالب (06)",
         "formative_score": 92,
         "assignments": 95,
         "attendance_rate": 90,
         "platform_activity": 85,
         "ai_prediction": "معرض للتعثر الأكاديمي",
         "is_trap": True,
-        "shap_explanation": "توصية النظام خاطئة ومناقضة للبيانات: الطالب متميز جداً بحصوله على 92% في التقييم و95% في الواجبات، وتصنيفه متعثراً خطأ يلزم تعديله.",
+        "contributions": {"نشاط المنصة": -35, "نسبة الحضور": -25, "الواجبات": -20, "التقييم التكويني": -10},
+        "shap_text": "يعزز نظام التفسير التوصية بالتعثر بناءً على وزن تأثير التفاعل الرقمي المحسوب بالنموذج.",
         "ground_truth": "أعدل"
     },
     {
@@ -207,7 +208,8 @@ STUDENTS_DATA = [
         "platform_activity": 70,
         "ai_prediction": "مستقر أكاديمياً",
         "is_trap": False,
-        "shap_explanation": "توازُن جميع المؤشرات فوق مستوى 70% يضمن استقرار الطالب أكاديمياً وفق نموذج التنبؤ.",
+        "contributions": {"نسبة الحضور": 25, "الواجبات": 25, "التقييم التكويني": 25, "نشاط المنصة": 25},
+        "shap_text": "توازن الأداء عبر كافة المؤشرات فوق مستوى 70% يضمن استقرار المستوى الأكاديمي.",
         "ground_truth": "أوافق"
     },
     {
@@ -219,19 +221,21 @@ STUDENTS_DATA = [
         "platform_activity": 30,
         "ai_prediction": "معرض للتعثر الأكاديمي",
         "is_trap": False,
-        "shap_explanation": "ضعف نشاط المنصة (30%) والحضور (50%) يمثلان عامل الخطر الرئيسي لتعثر الطالب.",
+        "contributions": {"نشاط المنصة": -30, "نسبة الحضور": -20, "التقييم التكويني": -15, "الواجبات": -10},
+        "shap_text": "ضعف التفاعل الرقمي بالمنصة (30%) والحضور (50%) يمثلان العامل التفسيري الأبرز للتعثر.",
         "ground_truth": "أوافق"
     },
     {
         "id": "S09",
-        "name": "الطالب (09) [فخ تجريبي]",
+        "name": "الطالب (09)",
         "formative_score": 35,
         "assignments": 30,
         "attendance_rate": 45,
         "platform_activity": 25,
         "ai_prediction": "مستقر أكاديمياً",
         "is_trap": True,
-        "shap_explanation": "توصية النظام خاطئة ومناقضة للبيانات: درجات الطالب متدنية جداً (التقييم 35% والواجبات 30%) واعتباره مستقراً قرار خاطئ يجب تعديله.",
+        "contributions": {"نسبة الحضور": 35, "نشاط المنصة": 30, "الواجبات": 15, "التقييم التكويني": 10},
+        "shap_text": "يعتمد التفسير المحلي للنظام على القيمة الترجيحية للحضور في تصنيف الطالب كمستقر.",
         "ground_truth": "أعدل"
     },
     {
@@ -243,7 +247,8 @@ STUDENTS_DATA = [
         "platform_activity": 90,
         "ai_prediction": "مستقر أكاديمياً",
         "is_trap": False,
-        "shap_explanation": "التفوق العالي في الحضور (96%) والواجبات (92%) يضع الطالب في أعلى فئات الاستقرار الأكاديمي.",
+        "contributions": {"نسبة الحضور": 35, "الواجبات": 30, "التقييم التكويني": 25, "نشاط المنصة": 10},
+        "shap_text": "التفوق العالي في الحضور (96%) والواجبات (92%) يدفعان التوصية لأعلى درجات الاستقرار الأكاديمي.",
         "ground_truth": "أوافق"
     }
 ]
@@ -252,7 +257,6 @@ STUDENTS_DATA = [
 if "consent" not in st.session_state:
     st.session_state.consent = False
 if "group" not in st.session_state:
-    # اختيار عشوائي حقيقي عند فتح المعلم للمنصة لأول مرة
     st.session_state.group = random.choice(["G1", "G2", "G3"])
 if "current_student" not in st.session_state:
     st.session_state.current_student = 0
@@ -262,7 +266,7 @@ if "survey_submitted" not in st.session_state:
     st.session_state.survey_submitted = False
 
 # -------------------------------------------------------------
-# لوحة التحكم للباحثة (مع مفاتيح فريدة تجنباً لتكرار العناصر)
+# لوحة التحكم للباحثة
 # -------------------------------------------------------------
 def render_researcher_controls(key_prefix="sidebar"):
     st.markdown("### لوحة المعاينة والتحكم (خاص بالباحثة)")
@@ -273,7 +277,7 @@ def render_researcher_controls(key_prefix="sidebar"):
         format_func=lambda x: {
             "G1": "الشاشة الأولى (G1): قرار مجرد دون أي شرح (الصندوق الأسود)",
             "G2": "الشاشة الثانية (G2): قرار + شرح عام لنظام الذكاء الاصطناعي",
-            "G3": "الشاشة الثالثة (G3): قرار + تفسير تفصيلي للطالب (SHAP)",
+            "G3": "الشاشة الثالثة (G3): قرار + مخطط وتفسير تفصيلي للطالب (SHAP)",
         }[x],
         index=["G1", "G2", "G3"].index(st.session_state.group),
         key=f"{key_prefix}_group_selector_radio"
@@ -387,13 +391,15 @@ else:
 
             st.markdown("<br>", unsafe_allow_html=True)
 
-            # عرض التفسير بدقة حسب المجموعة المحددة (G1, G2, G3) بدون رموز
+            # -----------------------------------------------------
+            # الشاشات الثلاث
+            # -----------------------------------------------------
             if group_code == "G1":
                 st.warning("تنبؤ مجرد (G1): يقدم النظام القرار النهائي فقط بدون أي تفاصيل أو شرح إضافي.")
 
             elif group_code == "G2":
                 st.subheader("شرح عام عن معايير النظام (G2)")
-                st.info("أهمية المؤشرات العامة في نموذج الذكاء الاصطناعي:\n- درجة التقييم التكويني: 40% (تأثير رئيسي)\n- نسبة الحضور: 30% (تأثير مباشر)\n- تسليم الواجبات: 20% (تأثير متوسط)\n- نشاط المنصة الرقمية: 10% (تأثير مساند)")
+                st.info("أهمية المؤشرات العامة في نموذج الذكاء الاصطناعي:\n- درجة التقييم التكويني: 40%\n- نسبة الحضور: 30%\n- تسليم الواجبات: 20%\n- نشاط المنصة الرقمية: 10%")
                 
                 fig, ax = plt.subplots(figsize=(4, 2.2))
                 features = ["التقييم التكويني", "نسبة الحضور", "الواجبات", "نشاط المنصة"]
@@ -405,8 +411,23 @@ else:
                 st.pyplot(fig)
 
             elif group_code == "G3":
-                st.subheader("التفسير التفصيلي لقرار الطالب (G3)")
-                st.success(f"تفسير القرار لـ {student['name']}:\n\n{student['shap_explanation']}")
+                st.subheader("التفسير التفصيلي الفردي للطالب (G3 - SHAP)")
+                
+                # رسم مخطط بياني لمساهمة مؤشرات هذا الطالب تحديداً
+                fig, ax = plt.subplots(figsize=(4.2, 2.4))
+                contrib_dict = student["contributions"]
+                feats = list(contrib_dict.keys())
+                vals = list(contrib_dict.values())
+                colors = ["#2F855A" if v > 0 else "#C53030" for v in vals]
+                
+                ax.barh(feats, vals, color=colors)
+                ax.axvline(0, color="black", linewidth=0.8, linestyle="--")
+                ax.set_xlabel("تأثير المؤشر على القرار الفردي (SHAP)", fontsize=8)
+                ax.tick_params(axis='both', labelsize=8)
+                fig.tight_layout()
+                st.pyplot(fig)
+
+                st.success(f"ملاحظة التفسير الفردي لـ {student['name']}:\n\n{student['shap_text']}")
 
         st.markdown("<br>", unsafe_allow_html=True)
         st.subheader("القرار التربوي للمعلم:")
@@ -447,8 +468,8 @@ else:
         if not st.session_state.survey_submitted:
             with st.form("survey_form"):
                 st.markdown("#### وضوح الشرح والشفافية")
-                ait1 = st.slider("1. كان الشرح المقدم من النظام واضحاً وسهل الفهم:", 1, 5, 3)
-                ait2 = st.slider("2. ساعدني الشرح على معرفة سبب اتخاذ النظام لهذا القرار:", 1, 5, 3)
+                ait1 = st.slider("1. كان الشرح والمخطط المقدم من النظام واضحاً وسهل الفهم:", 1, 5, 3)
+                ait2 = st.slider("2. ساعدني التفسير على معرفة سبب اتخاذ النظام لهذا القرار:", 1, 5, 3)
 
                 st.markdown("#### الثقة والقدرة على الاكتشاف")
                 tr1 = st.slider("1. أثق في القرارات التي يقدمها هذا النظام كإرشادات مساندة:", 1, 5, 3)
@@ -516,3 +537,4 @@ else:
                     st.info("لا توجد استجابات مسجلة حتى الآن.")
             elif pwd != "":
                 st.error("رمز الدخول غير صحيح")
+
