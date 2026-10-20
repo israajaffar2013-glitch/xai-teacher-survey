@@ -610,3 +610,11 @@ else:
                     st.info("لا توجد استجابات مسجلة حتى الآن.")
             elif pwd != "":
                 st.error("رمز الدخول غير صحيح")
+                # زر إعادة بدء التجربة للباحثة في أسفل الشاشة
+st.markdown("---")
+if st.button("🔄 إعادة بدء التجربة (خاص بالباحثة)"):
+    st.session_state.consent = False
+    st.session_state.current_student = 0
+    st.session_state.decisions = {}
+    st.session_state.survey_submitted = False
+    st.rerun()
