@@ -252,6 +252,7 @@ STUDENTS_DATA = [
 if "consent" not in st.session_state:
     st.session_state.consent = False
 if "group" not in st.session_state:
+    # اختيار عشوائي حقيقي عند فتح المعلم للمنصة لأول مرة
     st.session_state.group = random.choice(["G1", "G2", "G3"])
 if "current_student" not in st.session_state:
     st.session_state.current_student = 0
@@ -261,9 +262,9 @@ if "survey_submitted" not in st.session_state:
     st.session_state.survey_submitted = False
 
 # -------------------------------------------------------------
-# لوحة التحكم للباحثة (بدون أشكال أو رموز)
+# لوحة التحكم للباحثة (مع مفاتيح فريدة تجنباً لتكرار العناصر)
 # -------------------------------------------------------------
-def render_researcher_controls():
+def render_researcher_controls(key_prefix="sidebar"):
     st.markdown("### لوحة المعاينة والتحكم (خاص بالباحثة)")
     
     selected_g = st.radio(
@@ -275,11 +276,11 @@ def render_researcher_controls():
             "G3": "الشاشة الثالثة (G3): قرار + تفسير تفصيلي للطالب (SHAP)",
         }[x],
         index=["G1", "G2", "G3"].index(st.session_state.group),
-        key="group_selector_radio"
+        key=f"{key_prefix}_group_selector_radio"
     )
     st.session_state.group = selected_g
 
-    if st.button("إعادة بدء التجربة وتعيين مجموعة جديدة عشوائياً", key="reset_exp_btn"):
+    if st.button("إعادة بدء التجربة وتعيين مجموعة جديدة عشوائياً", key=f"{key_prefix}_reset_exp_btn"):
         st.session_state.consent = False
         st.session_state.current_student = 0
         st.session_state.decisions = {}
@@ -288,7 +289,7 @@ def render_researcher_controls():
         st.rerun()
 
 with st.sidebar:
-    render_researcher_controls()
+    render_researcher_controls(key_prefix="sb")
 
 # -------------------------------------------------------------
 # 1️⃣ الشاشة الأولى: الموافقة والتعليمات
@@ -341,7 +342,7 @@ if not st.session_state.consent:
         st.rerun()
 
     with st.expander("لوحة المعاينة والتحكم للباحثة (G1, G2, G3)"):
-        render_researcher_controls()
+        render_researcher_controls(key_prefix="exp_welcome")
 
 # -------------------------------------------------------------
 # 2️⃣ الشاشة الثانية: تقييم الطلاب
@@ -424,7 +425,7 @@ else:
                 st.rerun()
 
         with st.expander("لوحة المعاينة والتحكم للباحثة (تغيير G1, G2, G3)"):
-            render_researcher_controls()
+            render_researcher_controls(key_prefix="exp_eval")
 
     # -------------------------------------------------------------
     # 3️⃣ الشاشة الثالثة: الاستبيان النهائي
