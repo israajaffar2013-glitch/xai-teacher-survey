@@ -7,9 +7,8 @@ Educational XAI Decision Support System (EDSS) - Streamlit Application
 
 import os
 import random
-import matplotlib.pyplot as plt
-import numpy as np
 import pandas as pd
+import numpy as np
 import streamlit as st
 
 # -------------------------------------------------------------
@@ -23,114 +22,49 @@ st.set_page_config(
 )
 
 # -------------------------------------------------------------
-# CSS مخصص يزيل نهائياً الخطوط المتحركة والأشرطة العلوية والشارات الحمراء
+# CSS مخصص لتحسين المظهر وإخفاء العناصر غير الضرورية
 # -------------------------------------------------------------
 st.markdown(
     """
     <style>
-    /* 1. إخفاء كافة الأشرطة العلوية والخطوط المتحركة والشارات في Streamlit */
+    /* إخفاء الترويسة والتذييل غير الضروريين */
     #MainMenu, header, footer {
         visibility: hidden !important;
         display: none !important;
     }
-    [data-testid="stHeader"], [data-testid="stFooter"], [data-testid="stToolbar"], [data-testid="stDecoration"] {
-        display: none !important;
-        visibility: hidden !important;
-        height: 0px !important;
-    }
-    div[class*="viewerBadge"], div[class*="stAppHeader"], [data-testid="stStatusWidget"], [data-testid="stHeaderActionElements"] {
-        display: none !important;
-        visibility: hidden !important;
-    }
-    .stProgress, div[data-baseweb="progress-bar"] {
+    [data-testid="stHeader"], [data-testid="stFooter"], [data-testid="stToolbar"] {
         display: none !important;
     }
 
-    /* 2. إلغاء أي خط فاصل مسطري أسود */
-    hr, [data-testid="stDivider"] {
-        display: none !important;
-    }
-
-    /* 3. اتجاه النص العربي وتوافق الجوال */
+    /* الاتجاه والتنسيق العربي */
     html, body, [class*="css"], div, p, span, h1, h2, h3, h4, h5, h6, label {
         direction: rtl !important;
         text-align: right !important;
         font-family: 'Cairo', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif !important;
-        word-break: normal !important;
-        white-space: normal !important;
     }
 
-    /* 4. تنسيق التجاوب التام مع الجوال */
-    @media (max-width: 768px) {
-        .block-container {
-            padding-left: 0.8rem !important;
-            padding-right: 0.8rem !important;
-            padding-top: 1rem !important;
-        }
-        [data-testid="stHorizontalBlock"] {
-            flex-direction: column !important;
-            gap: 12px !important;
-        }
-        [data-testid="column"] {
-            width: 100% !important;
-            flex: 1 1 100% !important;
-            min-width: 100% !important;
-            margin-bottom: 8px !important;
-        }
-    }
-
-    /* 5. تنسيق الأزرار والبطاقات */
-    div.stButton > button, div.stFormSubmitButton > button {
-        font-weight: 800 !important;
-        font-size: 18px !important;
-        border-radius: 10px !important;
-        padding: 12px 20px !important;
-        border: none !important;
-        width: 100% !important;
-    }
-    
-    div[class*="st-key-start_btn"] button {
-        background-color: #3182CE !important;
-        color: #ffffff !important;
-    }
-
-    div[class*="st-key-agree"] button {
-        background-color: #38A169 !important;
-        color: #ffffff !important;
-    }
-
-    div[class*="st-key-edit"] button {
-        background-color: #E53E3E !important;
-        color: #ffffff !important;
-    }
-
-    .info-card {
-        background-color: #F7FAFC;
-        border-right: 5px solid #3182CE;
-        padding: 16px;
-        border-radius: 8px;
-        margin-bottom: 16px;
-    }
-
-    .metric-card {
+    /* تنسيق كروت البيانات */
+    .metric-box {
         background-color: #FFFFFF;
         border: 1px solid #E2E8F0;
-        border-radius: 8px;
+        border-radius: 10px;
         padding: 12px;
         text-align: center;
-        margin-bottom: 8px;
+        margin-bottom: 10px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
     }
-    .metric-label {
-        font-size: 15px;
+    .metric-title {
+        font-size: 14px;
         color: #4A5568;
         font-weight: bold;
     }
-    .metric-val {
-        font-size: 26px;
+    .metric-value {
+        font-size: 24px;
         color: #2B6CB0;
         font-weight: 800;
     }
 
+    /* أوسمة الحالة */
     .status-badge-red {
         background-color: #FFF5F5;
         color: #C53030;
@@ -151,6 +85,36 @@ st.markdown(
         text-align: center;
         border: 1px solid #9AE6B4;
     }
+
+    .info-card {
+        background-color: #F7FAFC;
+        border-right: 5px solid #3182CE;
+        padding: 16px;
+        border-radius: 8px;
+        margin-bottom: 16px;
+    }
+
+    /* أزرار القرار */
+    div.stButton > button {
+        font-weight: 800 !important;
+        font-size: 18px !important;
+        border-radius: 10px !important;
+        padding: 12px 20px !important;
+        border: none !important;
+        width: 100% !important;
+    }
+    div[class*="st-key-start_btn"] button {
+        background-color: #3182CE !important;
+        color: #ffffff !important;
+    }
+    div[class*="st-key-agree"] button {
+        background-color: #38A169 !important;
+        color: #ffffff !important;
+    }
+    div[class*="st-key-edit"] button {
+        background-color: #E53E3E !important;
+        color: #ffffff !important;
+    }
     </style>
 """,
     unsafe_allow_html=True,
@@ -159,34 +123,182 @@ st.markdown(
 RESPONSES_FILE = "teachers_responses.csv"
 
 # -------------------------------------------------------------
-# تحميل بيانات الطلاب الاصطناعية (10 طلاب مع فخاخ الاكتشاف)
+# بيانات الطلاب الاصطناعية (10 طلاب مع تفاصيل التفسير لكل مجموعة)
 # -------------------------------------------------------------
-@st.cache_data
-def load_students():
-    data = {
-        "student_id": [f"S{i:02d}" for i in range(1, 11)],
-        "name": [f"طالب {i}" for i in range(1, 11)],
-        "quiz_score": [85, 42, 30, 78, 60, 95, 72, 50, 35, 88],
-        "attendance_rate": [90, 50, 40, 85, 70, 98, 80, 60, 45, 92],
-        "assignments": [88, 40, 25, 80, 65, 92, 75, 55, 30, 90],
-        "platform_activity": [82, 35, 20, 75, 58, 96, 70, 48, 25, 85],
-        "ai_prediction": [
-            "مستقر أكاديمياً",
-            "معرض للتعثر الأكاديمي",
-            "معرض للتعثر الأكاديمي",  # فخ S03
-            "مستقر أكاديمياً",
-            "معرض للتعثر الأكاديمي",
-            "مستقر أكاديمياً",  # فخ S06
-            "مستقر أكاديمياً",
-            "معرض للتعثر الأكاديمي",
-            "معرض للتعثر الأكاديمي",  # فخ S09
-            "مستقر أكاديمياً",
-        ],
+STUDENTS_DATA = [
+    {
+        "id": "S01",
+        "name": "الطالب (01)",
+        "formative_score": 85,
+        "assignments": 90,
+        "attendance_rate": 95,
+        "platform_activity": 88,
+        "ai_prediction": "مستقر أكاديمياً",
+        "is_risk": False,
+        "is_trap": False,
+        "explanations": {
+            "G1": "توصية النموذج: الطالب مستقر أكاديمياً (بناءً على التنبؤ الإجمالي).",
+            "G2": "المؤشرات الرئيسية: التقييم التكويني (85%) والحضور (95%) هما الأهم في دعم استقرار الطالب.",
+            "G3": "التفسير التفصيلي: درجة التقييم التكويني أعلى بـ 35% من حد الخطر، والحضور ممتاز (+45%). التوصية: الإبقاء على الخطة الحالية."
+        },
+        "ground_truth": "أوافق"
+    },
+    {
+        "id": "S02",
+        "name": "الطالب (02)",
+        "formative_score": 42,
+        "assignments": 50,
+        "attendance_rate": 60,
+        "platform_activity": 35,
+        "ai_prediction": "معرض للتعثر الأكاديمي",
+        "is_risk": True,
+        "is_trap": False,
+        "explanations": {
+            "G1": "توصية النموذج: الطالب معرض للتعثر الأكاديمي.",
+            "G2": "المؤشرات الرئيسية: انخفاض التقييم التكويني (42%) ونشاط المنصة (35%) يرفعان خطر التعثر.",
+            "G3": "التفسير التفصيلي: درجة التقييم التكويني دون حد الأمان (-8%) والنشاط منخفض (-15%). التوصية: جلسات دعم وتوجيه عاجلة."
+        },
+        "ground_truth": "أوافق"
+    },
+    {
+        "id": "S03",
+        "name": "الطالب (03) [فخ تجريبي]",
+        "formative_score": 30,
+        "assignments": 25,
+        "attendance_rate": 40,
+        "platform_activity": 20,
+        "ai_prediction": "مستقر أكاديمياً",
+        "is_risk": False,
+        "is_trap": True,
+        "explanations": {
+            "G1": "توصية النموذج: الطالب مستقر أكاديمياً ولا يحتاج إلى تدخل.",
+            "G2": "المؤشرات الرئيسية: التقييم التكويني (30%) والواجبات (25%) منخفضة جداً بشكل مناقض للتوصية.",
+            "G3": "التفسير التفصيلي: جميع المؤشرات حادة وفي النطاق الأحمر (التقييم 30% والواجبات 25%). التوصية خاطئة وتستوجب التعديل."
+        },
+        "ground_truth": "أعدل"
+    },
+    {
+        "id": "S04",
+        "name": "الطالب (04)",
+        "formative_score": 78,
+        "assignments": 82,
+        "attendance_rate": 88,
+        "platform_activity": 80,
+        "ai_prediction": "مستقر أكاديمياً",
+        "is_risk": False,
+        "is_trap": False,
+        "explanations": {
+            "G1": "توصية النموذج: الطالب مستقر أكاديمياً.",
+            "G2": "المؤشرات الرئيسية: تسليم الواجبات (82%) والتفاعل إيجابيان للغاية.",
+            "G3": "التفسير التفصيلي: الحضور 88% والواجبات 82% يدعمان استقرار الطالب بنسبة مرتفعة."
+        },
+        "ground_truth": "أوافق"
+    },
+    {
+        "id": "S05",
+        "name": "الطالب (05)",
+        "formative_score": 48,
+        "assignments": 45,
+        "attendance_rate": 55,
+        "platform_activity": 40,
+        "ai_prediction": "معرض للتعثر الأكاديمي",
+        "is_risk": True,
+        "is_trap": False,
+        "explanations": {
+            "G1": "توصية النموذج: الطالب معرض للتعثر الأكاديمي.",
+            "G2": "المؤشرات الرئيسية: جميع الدرجات قريبة من حد التعثر التنازلي.",
+            "G3": "التفسير التفصيلي: التقييم التكويني (48%) والحضور (55%) قريبان من خط الخطر. التوصية: متابعة دورية."
+        },
+        "ground_truth": "أوافق"
+    },
+    {
+        "id": "S06",
+        "name": "الطالب (06) [فخ تجريبي]",
+        "formative_score": 92,
+        "assignments": 95,
+        "attendance_rate": 90,
+        "platform_activity": 85,
+        "ai_prediction": "معرض للتعثر الأكاديمي",
+        "is_risk": True,
+        "is_trap": True,
+        "explanations": {
+            "G1": "توصية النموذج: الطالب معرض للتعثر الأكاديمي.",
+            "G2": "المؤشرات الرئيسية: الدرجات مرتفعة جداً (92% و95%) وتتعارض مع التوصية بالتعثر.",
+            "G3": "التفسير التفصيلي: الدرجات ممتازة عبر كل المؤشرات (92% تقييم و90% حضور). التوصية بالتعثر خاطئة وتتطلب التعديل."
+        },
+        "ground_truth": "أعدل"
+    },
+    {
+        "id": "S07",
+        "name": "الطالب (07)",
+        "formative_score": 72,
+        "assignments": 75,
+        "attendance_rate": 80,
+        "platform_activity": 70,
+        "ai_prediction": "مستقر أكاديمياً",
+        "is_risk": False,
+        "is_trap": False,
+        "explanations": {
+            "G1": "توصية النموذج: الطالب مستقر أكاديمياً.",
+            "G2": "المؤشرات الرئيسية: الأداء جيد ومستقر في جميع الأنشطة.",
+            "G3": "التفسير التفصيلي: جميع المؤشرات فوق مستوى 70%. التوصية: استمرار النهج الحالي."
+        },
+        "ground_truth": "أوافق"
+    },
+    {
+        "id": "S08",
+        "name": "الطالب (08)",
+        "formative_score": 45,
+        "assignments": 50,
+        "attendance_rate": 50,
+        "platform_activity": 30,
+        "ai_prediction": "معرض للتعثر الأكاديمي",
+        "is_risk": True,
+        "is_trap": False,
+        "explanations": {
+            "G1": "توصية النموذج: الطالب معرض للتعثر الأكاديمي.",
+            "G2": "المؤشرات الرئيسية: نشاط المنصة (30%) والتقييم (45%) ضعيفان.",
+            "G3": "التفسير التفصيلي: انخفاض نشاط المنصة بشكل ملحوظ (-20%) يؤثر سلباً على التقييم. التوصية: توجيه أكاديمي."
+        },
+        "ground_truth": "أوافق"
+    },
+    {
+        "id": "S09",
+        "name": "الطالب (09) [فخ تجريبي]",
+        "formative_score": 35,
+        "assignments": 30,
+        "attendance_rate": 45,
+        "platform_activity": 25,
+        "ai_prediction": "مستقر أكاديمياً",
+        "is_risk": False,
+        "is_trap": True,
+        "explanations": {
+            "G1": "توصية النموذج: الطالب مستقر أكاديمياً.",
+            "G2": "المؤشرات الرئيسية: الأرقام منخفضة للغاية وتناقض توصية التكريم أو الاستقرار.",
+            "G3": "التفسير التفصيلي: الدرجات متدنية جداً (35% و30%). التوصية باستقرار الطالب خاطئة وتستدعي التعديل."
+        },
+        "ground_truth": "أعدل"
+    },
+    {
+        "id": "S10",
+        "name": "الطالب (10)",
+        "formative_score": 88,
+        "assignments": 92,
+        "attendance_rate": 96,
+        "platform_activity": 90,
+        "ai_prediction": "مستقر أكاديمياً",
+        "is_risk": False,
+        "is_trap": False,
+        "explanations": {
+            "G1": "توصية النموذج: الطالب مستقر أكاديمياً ومتفوق.",
+            "G2": "المؤشرات الرئيسية: التفوق في الحضور (96%) والواجبات (92%).",
+            "G3": "التفسير التفصيلي: أداء متميز عبر كافة المؤشرات (+40% فوق حد الأمان). التوصية: تشجيع الطالب وإشراكه في الأنشطة المتقدمة."
+        },
+        "ground_truth": "أوافق"
     }
-    return pd.DataFrame(data)
+]
 
-df_students = load_students()
-
+# تهيئة متطلبات الجلسة (Session State)
 if "consent" not in st.session_state:
     st.session_state.consent = False
 if "group" not in st.session_state:
@@ -202,21 +314,21 @@ if "survey_submitted" not in st.session_state:
 # 1️⃣ الشاشة الأولى: الموافقة والتعليمات
 # -------------------------------------------------------------
 if not st.session_state.consent:
-    st.title("🎓 دراسة تجريبية: تقييم قرارات الذكاء الاصطناعي")
+    st.title("🎓 دراسة تجريبية: تقييم قرارات الذكاء الاصطناعي في التعليم")
 
     st.markdown(
         """
         <div class="info-card">
             <h3 style="color: #2B6CB0; margin-top:0;">🎯 هدف الدراسة</h3>
             <p style="font-size: 16px; line-height: 1.7; color: #2D3748;">
-                قياس مدى قدرة المدرس على تقييم توصيات الذكاء الاصطناعي واكتشاف القرارات غير المبررة إن وجدت لدعم اتخاذ القرار التربوي.
+                قياس مدى قدرة المدرس على تقييم توصيات الذكاء الاصطناعي واكتشاف القرارات غير المبررة (إن وجدت) لدعم اتخاذ القرار التربوي.
             </p>
         </div>
         <div class="info-card">
             <h4 style="color: #2B6CB0; margin-top:0;">📋 التعليمات:</h4>
             <ol style="font-size: 15px; line-height: 1.8; color: #2D3748; padding-right: 20px;">
                 <li>ستعرض عليك بيانات <b>10 طلاب</b> متضمنة السجل الأكاديمي وتوصية الذكاء الاصطناعي.</li>
-                <li>المطلوب مراجعة بيانات كل طالب واتخاذ قرارك: <b>أوافق</b> أو <b>أعدل القرار</b>.</li>
+                <li>المطلوب مراجعة بيانات كل طالب ثم اتخاذ قرارك: <b>أوافق</b> أو <b>أعدل القرار</b>.</li>
                 <li>تعبئة استبيان قصير جداً في نهاية التجربة.</li>
             </ol>
         </div>
@@ -255,12 +367,12 @@ else:
     with st.sidebar:
         st.subheader("خيارات المعاينة (الباحثة)")
         st.session_state.group = st.radio(
-            "المجموعة:",
+            "مجموعة التفسير:",
             ["G1", "G2", "G3"],
             format_func=lambda x: {
-                "G1": "G1: بدون شرح (الصندوق الأسود)",
-                "G2": "G2: شرح عام للنظام",
-                "G3": "G3: شرح تفصيلي للطالب (SHAP)",
+                "G1": "G1: تنبؤ مباشر (الصندوق الأسود)",
+                "G2": "G2: أهمية المؤشرات الرئيسية",
+                "G3": "G3: شرح تفصيلي لحالة الطالب",
             }[x],
             index=["G1", "G2", "G3"].index(st.session_state.group),
         )
@@ -275,12 +387,11 @@ else:
     group_code = st.session_state.group
     idx = st.session_state.current_student
 
-    if idx < len(df_students):
-        student = df_students.iloc[idx]
+    if idx < len(STUDENTS_DATA):
+        student = STUDENTS_DATA[idx]
 
-        # شارة نصية أنيقة للتقدم
         st.markdown(
-            f'<div style="background-color: #E2E8F0; padding: 8px; border-radius: 8px; font-weight: bold; color: #2D3748; margin-bottom: 15px; text-align: center;">🎯 الطالب ({idx + 1} من {len(df_students)})</div>',
+            f'<div style="background-color: #E2E8F0; padding: 10px; border-radius: 8px; font-weight: bold; color: #2D3748; margin-bottom: 15px; text-align: center;">🎯 الطالب ({idx + 1} من {len(STUDENTS_DATA)})</div>',
             unsafe_allow_html=True
         )
 
@@ -293,10 +404,10 @@ else:
 
             st.markdown(
                 f"""
-                <div class="metric-card"><div class="metric-label">التقييم التكويني</div><div class="metric-val">{student["quiz_score"]}%</div></div>
-                <div class="metric-card"><div class="metric-label">تسليم الواجبات</div><div class="metric-val">{student["assignments"]}%</div></div>
-                <div class="metric-card"><div class="metric-label">نسبة الحضور</div><div class="metric-val">{student["attendance_rate"]}%</div></div>
-                <div class="metric-card"><div class="metric-label">نشاط المنصة</div><div class="metric-val">{student["platform_activity"]}%</div></div>
+                <div class="metric-box"><div class="metric-title">التقييم التكويني</div><div class="metric-value">{student["formative_score"]}%</div></div>
+                <div class="metric-box"><div class="metric-title">تسليم الواجبات</div><div class="metric-value">{student["assignments"]}%</div></div>
+                <div class="metric-box"><div class="metric-title">نسبة الحضور</div><div class="metric-value">{student["attendance_rate"]}%</div></div>
+                <div class="metric-box"><div class="metric-title">نشاط المنصة</div><div class="metric-value">{student["platform_activity"]}%</div></div>
                 """,
                 unsafe_allow_html=True,
             )
@@ -307,42 +418,13 @@ else:
 
             if "تعثر" in pred_status or "خطر" in pred_status:
                 st.markdown(f'<div class="status-badge-red">{pred_status}</div>', unsafe_allow_html=True)
-                st.caption("معنى التقييم: احتمالية تعثر يتطلب التدخل.")
             else:
                 st.markdown(f'<div class="status-badge-green">{pred_status}</div>', unsafe_allow_html=True)
-                st.caption("معنى التقييم: أداء مستقر يتوافق مع النجاح.")
 
             st.markdown("<br>", unsafe_allow_html=True)
-
-            if group_code == "G1":
-                st.info("تنبؤ مباشر: يقدم النظام النتيجة النهائية فقط دون تفاصيل.")
-
-            elif group_code == "G2":
-                st.subheader("أهمية المؤشرات العامة")
-                fig, ax = plt.subplots(figsize=(4, 2))
-                features = ["التقييم التكويني", "الحضور", "الواجبات", "النشاط"]
-                importance = [40, 25, 20, 15]
-                ax.barh(features, importance, color="#3182bd")
-                ax.set_xlabel("الأهمية (%)")
-                fig.tight_layout()
-                st.pyplot(fig)
-
-            elif group_code == "G3":
-                st.subheader("التفسير التفصيلي (SHAP)")
-                fig, ax = plt.subplots(figsize=(4, 2))
-                features = ["التقييم التكويني", "الحضور", "الواجبات", "النشاط"]
-                vals = [
-                    (student["quiz_score"] - 50) / 2,
-                    (student["attendance_rate"] - 50) / 2,
-                    (student["assignments"] - 50) / 2,
-                    (student["platform_activity"] - 50) / 2,
-                ]
-                colors = ["#2ca02c" if v >= 0 else "#d62728" for v in vals]
-                ax.barh(features, vals, color=colors)
-                ax.axvline(0, color="black", linewidth=1, linestyle="--")
-                ax.set_xlabel("التأثير مقارنة بحد النجاح 50%")
-                fig.tight_layout()
-                st.pyplot(fig)
+            st.markdown("#### التفسير المرفق مع التوصية:")
+            explanation_text = student["explanations"].get(group_code, "")
+            st.success(f"💡 **تفسير النظام ({group_code}):** {explanation_text}")
 
         st.markdown("<br>", unsafe_allow_html=True)
         st.subheader("قرارك التربوي كمدرس:")
@@ -350,13 +432,13 @@ else:
 
         with c1:
             if st.button("أوافق على قرار النظام", key=f"agree_{idx}", use_container_width=True):
-                st.session_state.decisions[student["student_id"]] = "أوافق"
+                st.session_state.decisions[student["id"]] = "أوافق"
                 st.session_state.current_student += 1
                 st.rerun()
 
         with c2:
             if st.button("أعدل القرار (الذكاء الاصطناعي مخطئ)", key=f"edit_{idx}", use_container_width=True):
-                st.session_state.decisions[student["student_id"]] = "أعدل"
+                st.session_state.decisions[student["id"]] = "أعدل"
                 st.session_state.current_student += 1
                 st.rerun()
 
