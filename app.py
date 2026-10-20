@@ -2,7 +2,7 @@
 """
 Educational XAI Decision Support System (EDSS) - Streamlit Application
 =====================================================================
-أثر توظيف نماذج الذكاء الاصطناعي القابلة للتفسير على شفافية نظم دعم القرار التعليمي لمدرسي المرحلة الثانوية
+دراسة تجريبية: أثر توظيف نماذج الذكاء الاصطناعي القابلة للتفسير على شفافية نظم دعم القرار التعليمي لمدرسي المرحلة الثانوية
 """
 
 import os
@@ -18,15 +18,16 @@ import streamlit as st
 st.set_page_config(
     page_title="أثر توظيف نماذج الذكاء الاصطناعي القابلة للتفسير على شفافية نظم دعم القرار التعليمي لمدرسي المرحلة الثانوية",
     layout="centered",
-    initial_sidebar_state="expanded",
+    initial_sidebar_state="collapsed",
 )
 
 # -------------------------------------------------------------
-# CSS مخصص لتحسين المظهر والقطع مع أي رموز تعبيرية
+# CSS مخصص للواجهة الأكاديمية دون رموز تعبيرية
 # -------------------------------------------------------------
 st.markdown(
     """
     <style>
+    /* إخفاء الترويسات والقوائم المنسدلة التلقائية */
     #MainMenu, header, footer {
         visibility: hidden !important;
         display: none !important;
@@ -35,16 +36,18 @@ st.markdown(
         display: none !important;
     }
 
+    /* الاتجاه والتنسيق العربي الأكاديمي */
     html, body, [class*="css"], div, p, span, h1, h2, h3, h4, h5, h6, label {
         direction: rtl !important;
         text-align: right !important;
         font-family: 'Cairo', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif !important;
     }
 
+    /* تنسيق كروت البيانات والأرقام */
     .metric-box {
         background-color: #FFFFFF;
         border: 1px solid #E2E8F0;
-        border-radius: 8px;
+        border-radius: 6px;
         padding: 12px;
         text-align: center;
         margin-bottom: 10px;
@@ -61,6 +64,7 @@ st.markdown(
         font-weight: 800;
     }
 
+    /* أوسمة الحالة الأكاديمية */
     .status-badge-red {
         background-color: #FFF5F5;
         color: #9B2C2C;
@@ -90,10 +94,11 @@ st.markdown(
         margin-bottom: 16px;
     }
 
+    /* أزرار القرار المنسقة رسمياً */
     div.stButton > button {
         font-weight: 800 !important;
         font-size: 18px !important;
-        border-radius: 8px !important;
+        border-radius: 6px !important;
         padding: 12px 20px !important;
         border: none !important;
         width: 100% !important;
@@ -118,7 +123,7 @@ st.markdown(
 RESPONSES_FILE = "teachers_responses.csv"
 
 # -------------------------------------------------------------
-# بيانات الطلاب الاصطناعية (أسماء حيادية دون الإفصاح عن الفخ)
+# بيانات الطلاب الاصطناعية (أسماء حيادية دون إفصاح للمعلم)
 # -------------------------------------------------------------
 STUDENTS_DATA = [
     {
@@ -130,8 +135,8 @@ STUDENTS_DATA = [
         "platform_activity": 88,
         "ai_prediction": "مستقر أكاديمياً",
         "is_trap": False,
-        "contributions": {"التقييم التكويني": 35, "نسبة الحضور": 30, "الواجبات": 20, "نشاط المنصة": 15},
-        "shap_text": "مساهمة إيجابية مرتفعة لدرجة التقييم التكويني الحالية (85%) والحضور الممتاز (95%) تدعم استقرار مستوى الطالب.",
+        "contributions": {"التقويم التكويني": 35, "نسبة الحضور": 30, "تسليم الواجبات": 20, "نشاط المنصة": 15},
+        "shap_text": "مساهمة إيجابية مرتفعة لدرجة التقويم التكويني الحالية (85%) ونسبة الحضور الممتازة (95%) تدعم استقرار مستوى الطالب.",
         "ground_truth": "أوافق"
     },
     {
@@ -143,8 +148,8 @@ STUDENTS_DATA = [
         "platform_activity": 35,
         "ai_prediction": "معرض للتعثر الأكاديمي",
         "is_trap": False,
-        "contributions": {"التقييم التكويني": -28, "نشاط المنصة": -22, "نسبة الحضور": -15, "الواجبات": -10},
-        "shap_text": "انخفاض التقييم التكويني (42%) وضعف النشاط بالمنصة (35%) هما المساهمان الأكبر في التنبؤ بالتعثر الأكاديمي.",
+        "contributions": {"التقويم التكويني": -28, "نشاط المنصة": -22, "نسبة الحضور": -15, "تسليم الواجبات": -10},
+        "shap_text": "انخفاض درجات التقويم التكويني (42%) وضعف النشاط بالمنصة (35%) هما المساهمان الأكبر في التنبؤ بالتعثر الأكاديمي.",
         "ground_truth": "أوافق"
     },
     {
@@ -156,8 +161,8 @@ STUDENTS_DATA = [
         "platform_activity": 20,
         "ai_prediction": "مستقر أكاديمياً",
         "is_trap": True,
-        "contributions": {"نشاط المنصة": 40, "نسبة الحضور": 25, "الواجبات": 15, "التقييم التكويني": 10},
-        "shap_text": "يشير التفسير الداخلي للنظام إلى اعتماد التوصية بالاستقرار على مؤشرات تفاعل المنصة.",
+        "contributions": {"نشاط المنصة": 40, "نسبة الحضور": 25, "تسليم الواجبات": 15, "التقويم التكويني": 10},
+        "shap_text": "يعتمد التفسير الداخلي للنظام على حسابات معايير تفاعل المنصة في تصنيف المستوى الأكاديمي.",
         "ground_truth": "أعدل"
     },
     {
@@ -169,7 +174,7 @@ STUDENTS_DATA = [
         "platform_activity": 80,
         "ai_prediction": "مستقر أكاديمياً",
         "is_trap": False,
-        "contributions": {"تسليم الواجبات": 30, "نسبة الحضور": 28, "التقييم التكويني": 22, "نشاط المنصة": 20},
+        "contributions": {"تسليم الواجبات": 30, "نسبة الحضور": 28, "التقويم التكويني": 22, "نشاط المنصة": 20},
         "shap_text": "الانتظام في تسليم الواجبات (82%) مع نسبة الحضور (88%) يسهمان بشكل رئيسي في التوصية بالاستقرار.",
         "ground_truth": "أوافق"
     },
@@ -182,8 +187,8 @@ STUDENTS_DATA = [
         "platform_activity": 40,
         "ai_prediction": "معرض للتعثر الأكاديمي",
         "is_trap": False,
-        "contributions": {"التقييم التكويني": -20, "الواجبات": -18, "نسبة الحضور": -12, "نشاط المنصة": -10},
-        "shap_text": "تقارب نتائج التقييم التكويني (48%) والواجبات (45%) من الحد الحرج ينقل الطالب لفئة خطر التعثر.",
+        "contributions": {"التقويم التكويني": -20, "تسليم الواجبات": -18, "نسبة الحضور": -12, "نشاط المنصة": -10},
+        "shap_text": "تقارب نتائج التقويم التكويني (48%) والواجبات (45%) من الحد الحرج ينقل الطالب لفئة خطر التعثر.",
         "ground_truth": "أوافق"
     },
     {
@@ -195,8 +200,8 @@ STUDENTS_DATA = [
         "platform_activity": 85,
         "ai_prediction": "معرض للتعثر الأكاديمي",
         "is_trap": True,
-        "contributions": {"نشاط المنصة": -35, "نسبة الحضور": -25, "الواجبات": -20, "التقييم التكويني": -10},
-        "shap_text": "يعزز نظام التفسير التوصية بالتعثر بناءً على وزن تأثير التفاعل الرقمي المحسوب بالنموذج.",
+        "contributions": {"نشاط المنصة": -35, "نسبة الحضور": -25, "تسليم الواجبات": -20, "التقويم التكويني": -10},
+        "shap_text": "يقدم نموذج التفسير خوارزمية ترجيح التفاعل الرقمي في بناء مخرجات التنبؤ.",
         "ground_truth": "أعدل"
     },
     {
@@ -208,7 +213,7 @@ STUDENTS_DATA = [
         "platform_activity": 70,
         "ai_prediction": "مستقر أكاديمياً",
         "is_trap": False,
-        "contributions": {"نسبة الحضور": 25, "الواجبات": 25, "التقييم التكويني": 25, "نشاط المنصة": 25},
+        "contributions": {"نسبة الحضور": 25, "تسليم الواجبات": 25, "التقويم التكويني": 25, "نشاط المنصة": 25},
         "shap_text": "توازن الأداء عبر كافة المؤشرات فوق مستوى 70% يضمن استقرار المستوى الأكاديمي.",
         "ground_truth": "أوافق"
     },
@@ -221,7 +226,7 @@ STUDENTS_DATA = [
         "platform_activity": 30,
         "ai_prediction": "معرض للتعثر الأكاديمي",
         "is_trap": False,
-        "contributions": {"نشاط المنصة": -30, "نسبة الحضور": -20, "التقييم التكويني": -15, "الواجبات": -10},
+        "contributions": {"نشاط المنصة": -30, "نسبة الحضور": -20, "التقويم التكويني": -15, "تسليم الواجبات": -10},
         "shap_text": "ضعف التفاعل الرقمي بالمنصة (30%) والحضور (50%) يمثلان العامل التفسيري الأبرز للتعثر.",
         "ground_truth": "أوافق"
     },
@@ -234,7 +239,7 @@ STUDENTS_DATA = [
         "platform_activity": 25,
         "ai_prediction": "مستقر أكاديمياً",
         "is_trap": True,
-        "contributions": {"نسبة الحضور": 35, "نشاط المنصة": 30, "الواجبات": 15, "التقييم التكويني": 10},
+        "contributions": {"نسبة الحضور": 35, "نشاط المنصة": 30, "تسليم الواجبات": 15, "التقويم التكويني": 10},
         "shap_text": "يعتمد التفسير المحلي للنظام على القيمة الترجيحية للحضور في تصنيف الطالب كمستقر.",
         "ground_truth": "أعدل"
     },
@@ -247,13 +252,13 @@ STUDENTS_DATA = [
         "platform_activity": 90,
         "ai_prediction": "مستقر أكاديمياً",
         "is_trap": False,
-        "contributions": {"نسبة الحضور": 35, "الواجبات": 30, "التقييم التكويني": 25, "نشاط المنصة": 10},
+        "contributions": {"نسبة الحضور": 35, "تسليم الواجبات": 30, "التقويم التكويني": 25, "نشاط المنصة": 10},
         "shap_text": "التفوق العالي في الحضور (96%) والواجبات (92%) يدفعان التوصية لأعلى درجات الاستقرار الأكاديمي.",
         "ground_truth": "أوافق"
     }
 ]
 
-# تهيئة متطلبات الجلسة (Session State)
+# تهيئة حالة الجلسة (Session State)
 if "consent" not in st.session_state:
     st.session_state.consent = False
 if "group" not in st.session_state:
@@ -266,34 +271,33 @@ if "survey_submitted" not in st.session_state:
     st.session_state.survey_submitted = False
 
 # -------------------------------------------------------------
-# لوحة التحكم للباحثة
+# لوحة التحكم الخاصة بالباحثة (محمية بكلمة سر)
 # -------------------------------------------------------------
-def render_researcher_controls(key_prefix="sidebar"):
-    st.markdown("### لوحة المعاينة والتحكم (خاص بالباحثة)")
-    
-    selected_g = st.radio(
-        "اختيار الشاشة / المجموعة التجريبية:",
-        ["G1", "G2", "G3"],
-        format_func=lambda x: {
-            "G1": "الشاشة الأولى (G1): قرار مجرد دون أي شرح (الصندوق الأسود)",
-            "G2": "الشاشة الثانية (G2): قرار + شرح عام لنظام الذكاء الاصطناعي",
-            "G3": "الشاشة الثالثة (G3): قرار + مخطط وتفسير تفصيلي للطالب (SHAP)",
-        }[x],
-        index=["G1", "G2", "G3"].index(st.session_state.group),
-        key=f"{key_prefix}_group_selector_radio"
-    )
-    st.session_state.group = selected_g
+def render_researcher_controls(key_prefix="researcher"):
+    st.markdown("### لوحة معاينة الباحثة")
+    pwd_check = st.text_input("رمز الدخول الخاص بالباحثة:", type="password", key=f"{key_prefix}_pwd")
+    if pwd_check == "1234":
+        st.success("تم التوثيق بنجاح")
+        selected_g = st.radio(
+            "تغيير المجموعة التجريبية للمعاينة:",
+            ["G1", "G2", "G3"],
+            format_func=lambda x: {
+                "G1": "الشاشة الأولى (G1): قرار مجرد دون شرح (الصندوق الأسود)",
+                "G2": "الشاشة الثانية (G2): قرار + شرح عام لنظام الذكاء الاصطناعي",
+                "G3": "الشاشة الثالثة (G3): قرار + مخطط وتفسير تفصيلي للطالب (SHAP)",
+            }[x],
+            index=["G1", "G2", "G3"].index(st.session_state.group),
+            key=f"{key_prefix}_group_radio"
+        )
+        st.session_state.group = selected_g
 
-    if st.button("إعادة بدء التجربة وتعيين مجموعة جديدة عشوائياً", key=f"{key_prefix}_reset_exp_btn"):
-        st.session_state.consent = False
-        st.session_state.current_student = 0
-        st.session_state.decisions = {}
-        st.session_state.survey_submitted = False
-        st.session_state.group = random.choice(["G1", "G2", "G3"])
-        st.rerun()
-
-with st.sidebar:
-    render_researcher_controls(key_prefix="sb")
+        if st.button("إعادة بدء التجربة وتعيين مجموعة جديدة عشوائياً", key=f"{key_prefix}_reset_btn"):
+            st.session_state.consent = False
+            st.session_state.current_student = 0
+            st.session_state.decisions = {}
+            st.session_state.survey_submitted = False
+            st.session_state.group = random.choice(["G1", "G2", "G3"])
+            st.rerun()
 
 # -------------------------------------------------------------
 # 1️⃣ الشاشة الأولى: الموافقة والتعليمات
@@ -345,7 +349,7 @@ if not st.session_state.consent:
         st.session_state.subject = subject
         st.rerun()
 
-    with st.expander("لوحة المعاينة والتحكم للباحثة (G1, G2, G3)"):
+    with st.expander("لوحة معاينة الباحثة (خاصة بالباحثة فقط)"):
         render_researcher_controls(key_prefix="exp_welcome")
 
 # -------------------------------------------------------------
@@ -359,7 +363,7 @@ else:
         student = STUDENTS_DATA[idx]
 
         st.markdown(
-            f'<div style="background-color: #E2E8F0; padding: 10px; border-radius: 6px; font-weight: bold; color: #1A202C; margin-bottom: 15px; text-align: center;">حالة الطالب ({idx + 1} من {len(STUDENTS_DATA)}) | المجموعة: ({group_code})</div>',
+            f'<div style="background-color: #E2E8F0; padding: 10px; border-radius: 6px; font-weight: bold; color: #1A202C; margin-bottom: 15px; text-align: center;">حالة الطالب ({idx + 1} من {len(STUDENTS_DATA)})</div>',
             unsafe_allow_html=True
         )
 
@@ -372,7 +376,7 @@ else:
 
             st.markdown(
                 f"""
-                <div class="metric-box"><div class="metric-title">التقييم التكويني</div><div class="metric-value">{student["formative_score"]}%</div></div>
+                <div class="metric-box"><div class="metric-title">التقويم التكويني (الأنشطة والاختبارات المستمرة)</div><div class="metric-value">{student["formative_score"]}%</div></div>
                 <div class="metric-box"><div class="metric-title">تسليم الواجبات</div><div class="metric-value">{student["assignments"]}%</div></div>
                 <div class="metric-box"><div class="metric-title">نسبة الحضور</div><div class="metric-value">{student["attendance_rate"]}%</div></div>
                 <div class="metric-box"><div class="metric-title">نشاط المنصة</div><div class="metric-value">{student["platform_activity"]}%</div></div>
@@ -399,10 +403,10 @@ else:
 
             elif group_code == "G2":
                 st.subheader("شرح عام عن معايير النظام (G2)")
-                st.info("أهمية المؤشرات العامة في نموذج الذكاء الاصطناعي:\n- درجة التقييم التكويني: 40%\n- نسبة الحضور: 30%\n- تسليم الواجبات: 20%\n- نشاط المنصة الرقمية: 10%")
+                st.info("أهمية المؤشرات العامة في نموذج الذكاء الاصطناعي:\n- التقويم التكويني: 40%\n- نسبة الحضور: 30%\n- تسليم الواجبات: 20%\n- نشاط المنصة الرقمية: 10%")
                 
                 fig, ax = plt.subplots(figsize=(4, 2.2))
-                features = ["التقييم التكويني", "نسبة الحضور", "الواجبات", "نشاط المنصة"]
+                features = ["التقويم التكويني", "نسبة الحضور", "الواجبات", "نشاط المنصة"]
                 importance = [40, 30, 20, 10]
                 ax.barh(features, importance, color="#2B6CB0")
                 ax.set_xlabel("نسبة الأهمية العامة (%)", fontsize=9)
@@ -445,7 +449,7 @@ else:
                 st.session_state.current_student += 1
                 st.rerun()
 
-        with st.expander("لوحة المعاينة والتحكم للباحثة (تغيير G1, G2, G3)"):
+        with st.expander("لوحة معاينة الباحثة (خاصة بالباحثة فقط)"):
             render_researcher_controls(key_prefix="exp_eval")
 
     # -------------------------------------------------------------
@@ -520,8 +524,8 @@ else:
         else:
             st.info("شكراً جزيلاً لمشاركتكم ووقتكم في دعم هذه الدراسة العلمية.")
 
-        with st.expander("لوحة تحميل البيانات (خاص بالباحثة فقط)"):
-            pwd = st.text_input("أدخلي رمز الدخول الخاص بالباحثة:", type="password", key="admin_pwd")
+        with st.expander("لوحة تحميل البيانات (خاصة بالباحثة فقط)"):
+            pwd = st.text_input("أدخلي رمز الدخول الخاص بالباحثة لتنزيل الملفات:", type="password", key="admin_pwd_download")
             if pwd == "1234":
                 st.success("تم التحقق بنجاح")
                 if os.path.exists(RESPONSES_FILE):
@@ -537,4 +541,3 @@ else:
                     st.info("لا توجد استجابات مسجلة حتى الآن.")
             elif pwd != "":
                 st.error("رمز الدخول غير صحيح")
-
