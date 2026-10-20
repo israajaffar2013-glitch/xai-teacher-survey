@@ -283,8 +283,8 @@ def render_researcher_controls(key_prefix="researcher"):
             ["G1", "G2", "G3"],
             format_func=lambda x: {
                 "G1": "الشاشة الأولى (G1): قرار مجرد دون شرح (الصندوق الأسود)",
-                "G2": "الشاشة الثانية (G2): قرار + شرح عام لنظام الذكاء الاصطناعي",
-                "G3": "الشاشة الثالثة (G3): قرار + مخطط وتفسير تفصيلي للطالب (SHAP)",
+                "G2": "الشاشة الثانية (G2): قرار + شرح عام كلي لنظام الذكاء الاصطناعي (مخطط دائر الأهمية العامة)",
+                "G3": "الشاشة الثالثة (G3): قرار + تفسير تفصيلي فردي للطالب (مخطط انحرافي SHAP)",
             }[x],
             index=["G1", "G2", "G3"].index(st.session_state.group),
             key=f"{key_prefix}_group_radio"
@@ -402,31 +402,42 @@ else:
                 st.warning("تنبؤ مجرد (G1): يقدم النظام القرار النهائي فقط بدون أي تفاصيل أو شرح إضافي.")
 
             elif group_code == "G2":
-                st.subheader("شرح عام عن معايير النظام (G2)")
-                st.info("أهمية المؤشرات العامة في نموذج الذكاء الاصطناعي:\n- التقويم التكويني: 40%\n- نسبة الحضور: 30%\n- تسليم الواجبات: 20%\n- نشاط المنصة الرقمية: 10%")
+                st.subheader("شرح عام كلي للنظام (G2 - Global Importance)")
+                st.info("المخطط أدناه يوضح وزن الأهمية النسبية العامة التي يعتمد عليها نموذج الذكاء الاصطناعي ككل لجميع الطلاب:")
                 
-                fig, ax = plt.subplots(figsize=(4, 2.2))
-                features = ["التقويم التكويني", "نسبة الحضور", "الواجبات", "نشاط المنصة"]
-                importance = [40, 30, 20, 10]
-                ax.barh(features, importance, color="#2B6CB0")
-                ax.set_xlabel("نسبة الأهمية العامة (%)", fontsize=9)
-                ax.tick_params(axis='both', labelsize=8)
+                # مخطط دائري مفرغ (Donut Chart) يُميز G2 تمييزاً بصرياً تاماً عن G3
+                fig, ax = plt.subplots(figsize=(3.8, 2.6))
+                labels = ["التقويم التكويني", "نسبة الحضور", "تسليم الواجبات", "نشاط المنصة"]
+                sizes = [40, 30, 20, 10]
+                colors = ["#1A365D", "#2B6CB0", "#4299E1", "#90CDF4"]
+                
+                wedges, texts, autotexts = ax.pie(
+                    sizes, labels=labels, autopct='%1.0f%%', startangle=90, 
+                    colors=colors, textprops=dict(fontsize=8, fontweight='bold')
+                )
+                centre_circle = plt.Circle((0,0), 0.55, fc='white')
+                fig.gca().add_artist(centre_circle)
+                ax.axis('equal')
                 fig.tight_layout()
                 st.pyplot(fig)
 
             elif group_code == "G3":
-                st.subheader("التفسير التفصيلي الفردي للطالب (G3 - SHAP)")
+                st.subheader("التفسير التفصيلي الفردي للطالب (G3 - Local SHAP)")
+                st.info(f"المخطط أدناه يوضح تحليل المساهمة الفردية الخاصة بـ {student['name']} محلياً:")
                 
-                # رسم مخطط بياني لمساهمة مؤشرات هذا الطالب تحديداً
+                # مخطط أعمدة انحرافي أفقي (+ أخضر / - أحمر) يوضح تأثير كل مؤشر فردي
                 fig, ax = plt.subplots(figsize=(4.2, 2.4))
                 contrib_dict = student["contributions"]
                 feats = list(contrib_dict.keys())
                 vals = list(contrib_dict.values())
                 colors = ["#2F855A" if v > 0 else "#C53030" for v in vals]
                 
-                ax.barh(feats, vals, color=colors)
+                y_pos = range(len(feats))
+                ax.barh(y_pos, vals, color=colors, height=0.5)
+                ax.set_yticks(y_pos)
+                ax.set_yticklabels(feats, fontsize=8, fontweight='bold')
                 ax.axvline(0, color="black", linewidth=0.8, linestyle="--")
-                ax.set_xlabel("تأثير المؤشر على القرار الفردي (SHAP)", fontsize=8)
+                ax.set_xlabel("تأثير المؤشر الفردي على القرار (+ إيجابي / - سلبي)", fontsize=8)
                 ax.tick_params(axis='both', labelsize=8)
                 fig.tight_layout()
                 st.pyplot(fig)
