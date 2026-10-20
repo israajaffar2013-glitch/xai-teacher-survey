@@ -270,14 +270,26 @@ if "decisions" not in st.session_state:
 if "survey_submitted" not in st.session_state:
     st.session_state.survey_submitted = False
 
+# دالة التحديث الفوري المباشر عند تغيير خيار الراديو من الباحثة
+def on_group_radio_change(key_name):
+    if key_name in st.session_state:
+        st.session_state.group = st.session_state[key_name]
+
 # -------------------------------------------------------------
-# لوحة التحكم الخاصة بالباحثة (محمية بكلمة سر)
+# لوحة التحكم الخاصة بالباحثة (محمية بكلمة سر ومربوطة بالتحديث الفوري)
 # -------------------------------------------------------------
 def render_researcher_controls(key_prefix="researcher"):
     st.markdown("### لوحة معاينة الباحثة")
     pwd_check = st.text_input("رمز الدخول الخاص بالباحثة:", type="password", key=f"{key_prefix}_pwd")
     if pwd_check == "1234":
         st.success("تم التوثيق بنجاح")
+        
+        radio_key = f"{key_prefix}_group_radio"
+        
+        # مزامنة الخيار المباشر مع st.session_state.group
+        if radio_key not in st.session_state or st.session_state[radio_key] != st.session_state.group:
+            st.session_state[radio_key] = st.session_state.group
+
         selected_g = st.radio(
             "تغيير المجموعة التجريبية للمعاينة:",
             ["G1", "G2", "G3"],
@@ -286,10 +298,10 @@ def render_researcher_controls(key_prefix="researcher"):
                 "G2": "الشاشة الثانية (G2): قرار + شرح عام كلي لنظام الذكاء الاصطناعي (مخطط دائر الأهمية العامة)",
                 "G3": "الشاشة الثالثة (G3): قرار + تفسير تفصيلي فردي للطالب (مخطط انحرافي SHAP)",
             }[x],
-            index=["G1", "G2", "G3"].index(st.session_state.group),
-            key=f"{key_prefix}_group_radio"
+            key=radio_key,
+            on_change=on_group_radio_change,
+            args=(radio_key,)
         )
-        st.session_state.group = selected_g
 
         if st.button("إعادة بدء التجربة وتعيين مجموعة جديدة عشوائياً", key=f"{key_prefix}_reset_btn"):
             st.session_state.consent = False
