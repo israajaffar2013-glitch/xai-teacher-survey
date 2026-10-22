@@ -419,7 +419,7 @@ elif st.session_state.step == "evaluating":
             
             fig, ax = plt.subplots(figsize=(3.8, 2.6))
             labels = ["التقويم التكويني", "نسبة الحضور", "تسليم الواجبات", "نشاط المنصة"]
-            sizes = [40, 30, 20, 10]
+            sizes = [40, 25, 20, 15]
             colors = ["#1A365D", "#2B6CB0", "#4299E1", "#90CDF4"]
             
             wedges, texts, autotexts = ax.pie(
@@ -571,6 +571,9 @@ elif st.session_state.step == "survey":
                 st.session_state.step = "completed"
                 st.rerun()
 
+# -------------------------------------------------------------
+# 4️⃣ الشاشة الأخيرة: شكر وتنزيل البيانات (step == 'completed')
+# -------------------------------------------------------------
 elif st.session_state.step == "completed":
     st.balloons()
     st.success("🎉 تم إرسال وحفظ نتائج التجربة بنجاح!")
@@ -579,7 +582,8 @@ elif st.session_state.step == "completed":
     شكراً جزيلاً لمشاركتكم الثمينة ووقتكم في دعم هذه الدراسة العلمية حول الذكاء الاصطناعي القابل للتفسير.
     """)
 
-    if is_researcher_mode or True:
+    # تظهر لوحة تنزيل البيانات فقط وفقط إذا فتحت الباحثة الرابط الخاص (?admin=1234)
+    if is_researcher_mode:
         st.markdown("---")
         with st.expander("لوحة تحميل البيانات (خاصة بالباحثة فقط)"):
             pwd = st.text_input("أدخلي رمز الدخول الخاص بالباحثة لتنزيل الملفات:", type="password", key="admin_pwd_download")
