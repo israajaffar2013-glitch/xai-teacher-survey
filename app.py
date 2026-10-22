@@ -36,7 +36,7 @@ st.markdown("""
     #stDecoration {display: none !important; visibility: hidden !important;}
     .stAppHeader {display: none !important; visibility: hidden !important;}
     
-    /* إخفاء الشعار والرابط وشعار المستودع وتاج Streamlit */
+    /* إخفاء الشعار والرابط وشعار المستودع تاج Streamlit */
     button[title="View source"] {display: none !important; visibility: hidden !important;}
     a[href*="github.com"] {display: none !important; visibility: hidden !important;}
     a[href*="streamlit.app"] {display: none !important; visibility: hidden !important;}
