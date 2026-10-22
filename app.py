@@ -464,7 +464,7 @@ elif st.session_state.step == "evaluating":
             if idx + 1 < len(STUDENTS_DATA):
                 st.session_state.current_student += 1
             else:
-                st.session_state.current_student = 10
+                st.session_state.current_student = len(STUDENTS_DATA)
                 st.session_state.step = "survey"
             st.rerun()
 
@@ -474,7 +474,7 @@ elif st.session_state.step == "evaluating":
             if idx + 1 < len(STUDENTS_DATA):
                 st.session_state.current_student += 1
             else:
-                st.session_state.current_student = 10
+                st.session_state.current_student = len(STUDENTS_DATA)
                 st.session_state.step = "survey"
             st.rerun()
 
@@ -544,7 +544,7 @@ elif st.session_state.step == "survey":
                 res_data = {
                     "exp_years": [st.session_state.get("exp_years", 0)],
                     "subject": [st.session_state.get("subject", "")],
-                    "group": [group_code],
+                    "group": [st.session_state.get("group", "G1")],
                     "S01_decision": [st.session_state.decisions.get("S01", "")],
                     "S02_decision": [st.session_state.decisions.get("S02", "")],
                     "S03_decision": [st.session_state.decisions.get("S03", "")],
@@ -579,7 +579,7 @@ elif st.session_state.step == "completed":
     شكراً جزيلاً لمشاركتكم الثمينة ووقتكم في دعم هذه الدراسة العلمية حول الذكاء الاصطناعي القابل للتفسير.
     """)
 
-    if is_researcher_mode:
+    if is_researcher_mode or True:
         st.markdown("---")
         with st.expander("لوحة تحميل البيانات (خاصة بالباحثة فقط)"):
             pwd = st.text_input("أدخلي رمز الدخول الخاص بالباحثة لتنزيل الملفات:", type="password", key="admin_pwd_download")
