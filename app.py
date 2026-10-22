@@ -27,7 +27,6 @@ st.set_page_config(
 st.markdown(
     """
     <style>
-    /* إخفاء الترويسة وشعار Streamlit والقائمة وشعار GitHub وتذييل الصفحة بالكامل */
     #MainMenu {visibility: hidden !important; display: none !important;}
     header {visibility: hidden !important; display: none !important;}
     footer {visibility: hidden !important; display: none !important;}
@@ -40,14 +39,12 @@ st.markdown(
     button[title="View source"] {display: none !important; visibility: hidden !important;}
     a[href*="github.com"] {display: none !important; visibility: hidden !important;}
     
-    /* ضبط محاذاة الخطوط العربية المعتمدة */
     html, body, [class*="css"], div, p, span, h1, h2, h3, h4, h5, h6, label {
         direction: rtl !important;
         text-align: right !important;
         font-family: 'Cairo', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif !important;
     }
 
-    /* تنسيق بطاقات الدرجات والمؤشرات */
     .metric-box {
         background-color: #FFFFFF;
         border: 1px solid #E2E8F0;
@@ -68,7 +65,6 @@ st.markdown(
         font-weight: 800;
     }
 
-    /* شارات التوصية الأكاديمية */
     .status-badge-red {
         background-color: #FFF5F5;
         color: #9B2C2C;
@@ -98,7 +94,6 @@ st.markdown(
         margin-bottom: 18px;
     }
 
-    /* أزرار اتخاذ القرار */
     div.stButton > button {
         font-weight: 800 !important;
         font-size: 18px !important;
@@ -127,7 +122,7 @@ st.markdown(
 RESPONSES_FILE = "teachers_responses.csv"
 
 # -------------------------------------------------------------
-# بيانات الطلاب الـ 10 الاصطناعية (تفسيرات SHAP واضحة ومقنعة)
+# بيانات الطلاب الـ 10 الاصطناعية
 # -------------------------------------------------------------
 STUDENTS_DATA = [
     {
@@ -274,9 +269,6 @@ if "decisions" not in st.session_state:
 if "survey_submitted" not in st.session_state:
     st.session_state.survey_submitted = False
 
-# -------------------------------------------------------------
-# التحقق من وجود المعلمة الباحثة عبر الرابط الخاص (?admin=1234)
-# -------------------------------------------------------------
 query_params = st.query_params
 is_researcher_mode = (query_params.get("admin") in ["1234", "true"]) or (query_params.get("mode") == "researcher")
 
@@ -369,7 +361,6 @@ elif st.session_state.step == "evaluating":
     group_code = st.session_state.group
     idx = st.session_state.current_student
 
-    # ضمان الانتقال التلقائي للاستبيان عند تجاوز الطالب 10 (idx >= 10)
     if idx >= len(STUDENTS_DATA):
         st.session_state.step = "survey"
         st.rerun()
@@ -419,7 +410,7 @@ elif st.session_state.step == "evaluating":
             
             fig, ax = plt.subplots(figsize=(3.8, 2.6))
             labels = ["التقويم التكويني", "نسبة الحضور", "تسليم الواجبات", "نشاط المنصة"]
-            sizes = [35, 25, 25, 15]
+            sizes = [40, 25, 20, 15]
             colors = ["#1A365D", "#2B6CB0", "#4299E1", "#90CDF4"]
             
             wedges, texts, autotexts = ax.pie(
@@ -582,7 +573,6 @@ elif st.session_state.step == "completed":
     شكراً جزيلاً لمشاركتكم الثمينة ووقتكم في دعم هذه الدراسة العلمية حول الذكاء الاصطناعي القابل للتفسير.
     """)
 
-    # تظهر لوحة تنزيل البيانات فقط وفقط إذا فتحت الباحثة الرابط الخاص (?admin=1234)
     if is_researcher_mode:
         st.markdown("---")
         with st.expander("لوحة تحميل البيانات (خاصة بالباحثة فقط)"):
