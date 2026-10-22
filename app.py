@@ -2,7 +2,7 @@
 """
 Educational XAI Decision Support System (EDSS) - Streamlit Application (app.py)
 ========================================================================
-تطبيق التقييم والقرار التربوي للمعلمين بذكاء اصطناعي قابل للتفسير (XAI)
+دراسة تجريبية: أثر توظيف نماذج الذكاء الاصطناعي القابلة للتفسير على شفافية نظم دعم القرار التعليمي لمدرسي المرحلة الثانوية
 """
 
 import os
@@ -12,43 +12,55 @@ import numpy as np
 import matplotlib.pyplot as plt
 import streamlit as st
 
-# -------------------------------------------------------------
-# 1. إعدادات الصفحة والواجهة الرسمية
-# -------------------------------------------------------------
+# 1. إعدادات الصفحة
 st.set_page_config(
     page_title="منصة دعم القرار التعليمي بالذكاء الاصطناعي",
     page_icon="🎓",
     layout="centered",
-    initial_sidebar_state="collapsed",
+    initial_sidebar_state="collapsed"
 )
 
-# -------------------------------------------------------------
-# 2. CSS مخصص لإخفاء شريط Streamlit وأيقونة GitHub وضبط المحاذاة
-# -------------------------------------------------------------
-st.markdown(
-    """
-    <style>
-    /* إخفاء الترويسة وشعار Streamlit والقائمة وشعار GitHub وتذييل الصفحة بالكامل */
+# 2. CSS شامل لإخفاء جميع عناصر Streamlit و GitHub ورأس/ذيل الصفحة بالكامل
+st.markdown("""
+<style>
+    /* إخفاء الترويسة وأيقونات Streamlit و GitHub تماماً */
     #MainMenu {visibility: hidden !important; display: none !important;}
     header {visibility: hidden !important; display: none !important;}
     footer {visibility: hidden !important; display: none !important;}
-    [data-testid="stHeader"] {display: none !important; visibility: hidden !important;}
+    header[data-testid="stHeader"] {display: none !important; visibility: hidden !important; height: 0px !important;}
+    [data-testid="stHeader"] {display: none !important; visibility: hidden !important; height: 0px !important;}
     [data-testid="stToolbar"] {display: none !important; visibility: hidden !important;}
     [data-testid="stDecoration"] {display: none !important; visibility: hidden !important;}
     [data-testid="stStatusWidget"] {display: none !important; visibility: hidden !important;}
+    [data-testid="stHeaderActionElements"] {display: none !important; visibility: hidden !important;}
     #stDecoration {display: none !important; visibility: hidden !important;}
-    .styles_viewerBadge__1yB5G {display: none !important; visibility: hidden !important;}
+    .stAppHeader {display: none !important; visibility: hidden !important;}
+    
+    /* إخفاء الشعار والرابط وشعار المستودع وتاج Streamlit */
     button[title="View source"] {display: none !important; visibility: hidden !important;}
     a[href*="github.com"] {display: none !important; visibility: hidden !important;}
+    a[href*="streamlit.app"] {display: none !important; visibility: hidden !important;}
+    .styles_viewerBadge__1yB5G {display: none !important; visibility: hidden !important;}
+    .viewerBadge_container__13533 {display: none !important; visibility: hidden !important;}
+    .viewerBadge_link__1S137 {display: none !important; visibility: hidden !important;}
+    div[class*="viewerBadge"] {display: none !important; visibility: hidden !important;}
+    div[class*="stDecoration"] {display: none !important; visibility: hidden !important;}
+    div[class*="stAppHeader"] {display: none !important; visibility: hidden !important;}
+
+    /* تعديل المسافة العلوية للصفحة بعد إخفاء الهيدر */
+    .main .block-container {
+        padding-top: 1.5rem !important;
+        padding-bottom: 2rem !important;
+    }
     
-    /* ضبط محاذاة الخطوط العربية المعتمدة */
+    /* محاذاة الخطوط العربية */
     html, body, [class*="css"], div, p, span, h1, h2, h3, h4, h5, h6, label {
         direction: rtl !important;
         text-align: right !important;
         font-family: 'Cairo', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif !important;
     }
 
-    /* تنسيق بطاقات الدرجات والمؤشرات */
+    /* تنسيق بطاقات البيانات */
     .metric-box {
         background-color: #FFFFFF;
         border: 1px solid #E2E8F0;
@@ -69,7 +81,6 @@ st.markdown(
         font-weight: 800;
     }
 
-    /* شارات التوصية الأكاديمية */
     .status-badge-red {
         background-color: #FFF5F5;
         color: #9B2C2C;
@@ -99,7 +110,7 @@ st.markdown(
         margin-bottom: 18px;
     }
 
-    /* أزرار اتخاذ القرار */
+    /* أزرار الصفحة */
     div.stButton > button {
         font-weight: 800 !important;
         font-size: 18px !important;
@@ -120,16 +131,12 @@ st.markdown(
         background-color: #C53030 !important;
         color: #ffffff !important;
     }
-    </style>
-""",
-    unsafe_allow_html=True,
-)
+</style>
+""", unsafe_allow_html=True)
 
 RESPONSES_FILE = "teachers_responses.csv"
 
-# -------------------------------------------------------------
-# 3. تهيئة متطلبات الجلسة (Session State)
-# -------------------------------------------------------------
+# 3. تهيئة حالة الجلسة
 if "step" not in st.session_state:
     st.session_state.step = "welcome"
 if "group" not in st.session_state:
@@ -145,9 +152,7 @@ if "survey_submitted" not in st.session_state:
 query_params = st.query_params
 is_researcher_mode = (query_params.get("admin") in ["1234", "true"]) or (query_params.get("mode") == "researcher")
 
-# -------------------------------------------------------------
-# 4. بيانات الطلاب الـ 10 الاصطناعية للتجربة
-# -------------------------------------------------------------
+# 4. بيانات الطلاب الـ 10 الاصطناعية
 STUDENTS_DATA = [
     {
         "id": "S01",
@@ -177,7 +182,7 @@ STUDENTS_DATA = [
     },
     {
         "id": "S03",
-        "name": "الطالب (03) [فخ تجريبي]",
+        "name": "الطالب (03)",
         "formative_score": 30,
         "assignments": 25,
         "attendance_rate": 40,
@@ -216,7 +221,7 @@ STUDENTS_DATA = [
     },
     {
         "id": "S06",
-        "name": "الطالب (06) [فخ تجريبي]",
+        "name": "الطالب (06)",
         "formative_score": 92,
         "assignments": 95,
         "attendance_rate": 90,
@@ -255,7 +260,7 @@ STUDENTS_DATA = [
     },
     {
         "id": "S09",
-        "name": "الطالب (09) [فخ تجريبي]",
+        "name": "الطالب (09)",
         "formative_score": 35,
         "assignments": 30,
         "attendance_rate": 45,
@@ -281,7 +286,7 @@ STUDENTS_DATA = [
     }
 ]
 
-# دالة حفظ نتائج التجربة في ملف CSV
+# دالة حفظ نتائج التجربة
 def save_teacher_responses(exp_years, subject, group, decisions, survey_responses):
     filename = RESPONSES_FILE
     
@@ -377,7 +382,7 @@ elif st.session_state.step == "evaluating":
     group_code = st.session_state.group
     idx = st.session_state.current_student
 
-    # ضمان الانتقال للإنهاء عند كمال 10 طلاب
+    # ضمان الانتقال المستقل والمباشر للشاشة الثالثة عند إنهاء الطلاب العشرة
     if idx >= len(STUDENTS_DATA):
         st.session_state.step = "survey"
         st.rerun()
@@ -426,7 +431,7 @@ elif st.session_state.step == "evaluating":
             
             fig, ax = plt.subplots(figsize=(3.8, 2.6))
             labels = ["التقويم التكويني", "نسبة الحضور", "تسليم الواجبات", "نشاط المنصة"]
-            sizes = [40, 30, 20, 10]
+            sizes = [40, 25, 20, 15]
             colors = ["#1A365D", "#2B6CB0", "#4299E1", "#90CDF4"]
             
             ax.pie(sizes, labels=labels, autopct='%1.0f%%', startangle=90, colors=colors, textprops=dict(fontsize=8, fontweight='bold'))
