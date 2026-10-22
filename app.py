@@ -419,7 +419,7 @@ elif st.session_state.step == "evaluating":
             
             fig, ax = plt.subplots(figsize=(3.8, 2.6))
             labels = ["التقويم التكويني", "نسبة الحضور", "تسليم الواجبات", "نشاط المنصة"]
-            sizes = [40, 25, 20, 15]
+            sizes = [35, 28, 22, 15]
             colors = ["#1A365D", "#2B6CB0", "#4299E1", "#90CDF4"]
             
             wedges, texts, autotexts = ax.pie(
