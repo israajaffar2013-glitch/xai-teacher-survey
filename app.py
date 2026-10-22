@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-Educational XAI Decision Support System (EDSS) - Streamlit Application
-=====================================================================
-دراسة تجريبية: أثر توظيف نماذج الذكاء الاصطناعي القابلة للتفسير على شفافية نظم دعم القرار التعليمي لمدرسي المرحلة الثانوية
+Educational XAI Decision Support System (EDSS) - Streamlit Application (app.py)
+========================================================================
+تطبيق التقييم والقرار التربوي للمعلمين بذكاء اصطناعي قابل للتفسير (XAI)
 """
 
 import os
@@ -13,20 +13,22 @@ import matplotlib.pyplot as plt
 import streamlit as st
 
 # -------------------------------------------------------------
-# إعدادات الصفحة والواجهة الرسمية
+# 1. إعدادات الصفحة والواجهة الرسمية
 # -------------------------------------------------------------
 st.set_page_config(
     page_title="منصة دعم القرار التعليمي بالذكاء الاصطناعي",
+    page_icon="🎓",
     layout="centered",
     initial_sidebar_state="collapsed",
 )
 
 # -------------------------------------------------------------
-# CSS مخصص لإخفاء عناصر Streamlit العلوية والسفلية والرموز تماماً
+# 2. CSS مخصص لإخفاء شريط Streamlit وأيقونة GitHub وضبط المحاذاة
 # -------------------------------------------------------------
 st.markdown(
     """
     <style>
+    /* إخفاء الترويسة وشعار Streamlit والقائمة وشعار GitHub وتذييل الصفحة بالكامل */
     #MainMenu {visibility: hidden !important; display: none !important;}
     header {visibility: hidden !important; display: none !important;}
     footer {visibility: hidden !important; display: none !important;}
@@ -39,12 +41,14 @@ st.markdown(
     button[title="View source"] {display: none !important; visibility: hidden !important;}
     a[href*="github.com"] {display: none !important; visibility: hidden !important;}
     
+    /* ضبط محاذاة الخطوط العربية المعتمدة */
     html, body, [class*="css"], div, p, span, h1, h2, h3, h4, h5, h6, label {
         direction: rtl !important;
         text-align: right !important;
         font-family: 'Cairo', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif !important;
     }
 
+    /* تنسيق بطاقات الدرجات والمؤشرات */
     .metric-box {
         background-color: #FFFFFF;
         border: 1px solid #E2E8F0;
@@ -65,6 +69,7 @@ st.markdown(
         font-weight: 800;
     }
 
+    /* شارات التوصية الأكاديمية */
     .status-badge-red {
         background-color: #FFF5F5;
         color: #9B2C2C;
@@ -94,6 +99,7 @@ st.markdown(
         margin-bottom: 18px;
     }
 
+    /* أزرار اتخاذ القرار */
     div.stButton > button {
         font-weight: 800 !important;
         font-size: 18px !important;
@@ -122,7 +128,25 @@ st.markdown(
 RESPONSES_FILE = "teachers_responses.csv"
 
 # -------------------------------------------------------------
-# بيانات الطلاب الـ 10 الاصطناعية
+# 3. تهيئة متطلبات الجلسة (Session State)
+# -------------------------------------------------------------
+if "step" not in st.session_state:
+    st.session_state.step = "welcome"
+if "group" not in st.session_state:
+    st.session_state.group = random.choice(["G1", "G2", "G3"])
+if "current_student" not in st.session_state:
+    st.session_state.current_student = 0
+if "decisions" not in st.session_state:
+    st.session_state.decisions = {}
+if "survey_submitted" not in st.session_state:
+    st.session_state.survey_submitted = False
+
+# كشف رابط الباحثة الخاص (?admin=1234)
+query_params = st.query_params
+is_researcher_mode = (query_params.get("admin") in ["1234", "true"]) or (query_params.get("mode") == "researcher")
+
+# -------------------------------------------------------------
+# 4. بيانات الطلاب الـ 10 الاصطناعية للتجربة
 # -------------------------------------------------------------
 STUDENTS_DATA = [
     {
@@ -153,7 +177,7 @@ STUDENTS_DATA = [
     },
     {
         "id": "S03",
-        "name": "الطالب (03)",
+        "name": "الطالب (03) [فخ تجريبي]",
         "formative_score": 30,
         "assignments": 25,
         "attendance_rate": 40,
@@ -192,7 +216,7 @@ STUDENTS_DATA = [
     },
     {
         "id": "S06",
-        "name": "الطالب (06)",
+        "name": "الطالب (06) [فخ تجريبي]",
         "formative_score": 92,
         "assignments": 95,
         "attendance_rate": 90,
@@ -231,7 +255,7 @@ STUDENTS_DATA = [
     },
     {
         "id": "S09",
-        "name": "الطالب (09)",
+        "name": "الطالب (09) [فخ تجريبي]",
         "formative_score": 35,
         "assignments": 30,
         "attendance_rate": 45,
@@ -257,41 +281,59 @@ STUDENTS_DATA = [
     }
 ]
 
-# تهيئة حالة الجلسة (Session State)
-if "step" not in st.session_state:
-    st.session_state.step = "welcome"
-if "group" not in st.session_state:
-    st.session_state.group = random.choice(["G1", "G2", "G3"])
-if "current_student" not in st.session_state:
-    st.session_state.current_student = 0
-if "decisions" not in st.session_state:
-    st.session_state.decisions = {}
-if "survey_submitted" not in st.session_state:
-    st.session_state.survey_submitted = False
+# دالة حفظ نتائج التجربة في ملف CSV
+def save_teacher_responses(exp_years, subject, group, decisions, survey_responses):
+    filename = RESPONSES_FILE
+    
+    trap_students = [s for s in STUDENTS_DATA if s["is_trap"]]
+    correct_trap_detections = sum(1 for s in trap_students if decisions.get(s["id"]) == s["ground_truth"])
+    trap_detection_score = round((correct_trap_detections / len(trap_students)) * 100, 2)
+    
+    total_correct = sum(1 for s in STUDENTS_DATA if decisions.get(s["id"]) == s["ground_truth"])
+    total_accuracy = round((total_correct / len(STUDENTS_DATA)) * 100, 2)
+    
+    record = {
+        "exp_years": exp_years,
+        "subject": subject,
+        "group": group,
+        "S01_decision": decisions.get("S01", ""),
+        "S02_decision": decisions.get("S02", ""),
+        "S03_decision": decisions.get("S03", ""),
+        "S04_decision": decisions.get("S04", ""),
+        "S05_decision": decisions.get("S05", ""),
+        "S06_decision": decisions.get("S06", ""),
+        "S07_decision": decisions.get("S07", ""),
+        "S08_decision": decisions.get("S08", ""),
+        "S09_decision": decisions.get("S09", ""),
+        "S10_decision": decisions.get("S10", ""),
+        "trap_detection_score": trap_detection_score,
+        "total_accuracy": total_accuracy,
+        "ait_score": survey_responses.get("ait_score", 3),
+        "trust_score": survey_responses.get("trust_score", 3)
+    }
+    
+    df_new = pd.DataFrame([record])
+    file_exists = os.path.isfile(filename)
+    df_new.to_csv(filename, mode="a", header=not file_exists, index=False, encoding="utf-8-sig")
 
-query_params = st.query_params
-is_researcher_mode = (query_params.get("admin") in ["1234", "true"]) or (query_params.get("mode") == "researcher")
 
-def on_group_radio_change(key_name):
-    if key_name in st.session_state:
-        st.session_state.group = st.session_state[key_name]
-
-# -------------------------------------------------------------
-# 1️⃣ الشاشة الأولى: الموافقة والتعليمات (step == 'welcome')
-# -------------------------------------------------------------
+# =============================================================
+# 5. الشاشة الأولى: الموافقة والتعليمات (step == 'welcome')
+# =============================================================
 if st.session_state.step == "welcome":
-    st.title("دراسة تجريبية: أثر توظيف نماذج الذكاء الاصطناعي القابلة للتفسير على شفافية نظم دعم القرار التعليمي لمدرسي المرحلة الثانوية")
+    st.title("🎓 منصة دعم القرار التعليمي بالذكاء الاصطناعي")
+    st.markdown("---")
 
     st.markdown(
         """
         <div class="info-card">
-            <h3 style="color: #1A365D; margin-top:0;">هدف الدراسة</h3>
+            <h3 style="color: #1A365D; margin-top:0;">🎯 هدف الدراسة</h3>
             <p style="font-size: 16px; line-height: 1.7; color: #2D3748;">
                 قياس مدى أثر توظيف نماذج الذكاء الاصطناعي القابلة للتفسير على تعزيز شفافية نظم دعم القرار التعليمي، وتمكين مدرسي المرحلة الثانوية من تقييم التوصيات الأكاديمية واكتشاف القرارات غير المبررة.
             </p>
         </div>
         <div class="info-card">
-            <h4 style="color: #1A365D; margin-top:0;">التعليمات الرسمية:</h4>
+            <h4 style="color: #1A365D; margin-top:0;">📋 التعليمات الرسمية:</h4>
             <ol style="font-size: 15px; line-height: 1.8; color: #2D3748; padding-right: 20px;">
                 <li>ستعرض عليك بيانات <b>10 طلاب</b> متضمنة السجل الأكاديمي وتوصية الذكاء الاصطناعي.</li>
                 <li>المطلوب مراجعة بيانات كل طالب ثم اتخاذ قرارك التربوي: <b>أوافق</b> أو <b>أعدل القرار</b>.</li>
@@ -320,47 +362,22 @@ if st.session_state.step == "welcome":
         )
 
     st.markdown("<br>", unsafe_allow_html=True)
-    if st.button("أوافق وابدأ تقييم الطلاب", type="primary", key="start_btn", use_container_width=True):
+    if st.button("🚀 أوافق وابدأ تقييم الطلاب", type="primary", key="start_btn", use_container_width=True):
         st.session_state.exp_years = exp_years
         st.session_state.subject = subject
         st.session_state.current_student = 0
         st.session_state.step = "evaluating"
         st.rerun()
 
-    if is_researcher_mode:
-        st.markdown("---")
-        st.subheader("لوحة تحكم الباحثة (تظهر لكِ فقط عند استخدام الرابط الخاص):")
-        radio_key = "admin_group_welcome"
-        if radio_key not in st.session_state or st.session_state[radio_key] != st.session_state.group:
-            st.session_state[radio_key] = st.session_state.group
 
-        st.radio(
-            "اختيار المجموعة للتجربة والمعاينة المباشرة:",
-            ["G1", "G2", "G3"],
-            format_func=lambda x: {
-                "G1": "الشاشة الأولى (G1): قرار مجرد دون شرح (الصندوق الأسود)",
-                "G2": "الشاشة الثانية (G2): قرار + شرح عام لنظام الذكاء الاصطناعي (مخطط دائر الأهمية الكلية)",
-                "G3": "الشاشة الثالثة (G3): قرار + مخطط وتفسير تفصيلي فردي للطالب (SHAP الانحرافي)",
-            }[x],
-            key=radio_key,
-            on_change=on_group_radio_change,
-            args=(radio_key,)
-        )
-        if st.button("إعادة تعيين وبدء تجربة جديدة", key="reset_welcome_admin"):
-            st.session_state.step = "welcome"
-            st.session_state.current_student = 0
-            st.session_state.decisions = {}
-            st.session_state.survey_submitted = False
-            st.session_state.group = random.choice(["G1", "G2", "G3"])
-            st.rerun()
-
-# -------------------------------------------------------------
-# 2️⃣ الشاشة الثانية: تقييم الطلاب (step == 'evaluating')
-# -------------------------------------------------------------
+# =============================================================
+# 6. الشاشة الثانية: تقييم درجات الطلاب (step == 'evaluating')
+# =============================================================
 elif st.session_state.step == "evaluating":
     group_code = st.session_state.group
     idx = st.session_state.current_student
 
+    # ضمان الانتقال للإنهاء عند كمال 10 طلاب
     if idx >= len(STUDENTS_DATA):
         st.session_state.step = "survey"
         st.rerun()
@@ -379,10 +396,9 @@ elif st.session_state.step == "evaluating":
 
     with col_data:
         st.subheader(f"سجل {student['name']}")
-
         st.markdown(
             f"""
-            <div class="metric-box"><div class="metric-title">التقويم التكويني (الأنشطة والاختبارات المستمرة)</div><div class="metric-value">{student["formative_score"]}%</div></div>
+            <div class="metric-box"><div class="metric-title">التقويم التكويني</div><div class="metric-value">{student["formative_score"]}%</div></div>
             <div class="metric-box"><div class="metric-title">تسليم الواجبات</div><div class="metric-value">{student["assignments"]}%</div></div>
             <div class="metric-box"><div class="metric-title">نسبة الحضور</div><div class="metric-value">{student["attendance_rate"]}%</div></div>
             <div class="metric-box"><div class="metric-title">نشاط المنصة</div><div class="metric-value">{student["platform_activity"]}%</div></div>
@@ -406,17 +422,14 @@ elif st.session_state.step == "evaluating":
 
         elif group_code == "G2":
             st.subheader("شرح عام كلي للنظام (G2 - Global Importance)")
-            st.info("المخطط أدناه يوضح وزن الأهمية النسبية العامة التي يعتمد عليها نموذج الذكاء الاصطناعي ككل لجميع الطلاب:")
+            st.info("المخطط أدناه يوضح وزن الأهمية النسبية العامة لجميع الطلاب:")
             
             fig, ax = plt.subplots(figsize=(3.8, 2.6))
             labels = ["التقويم التكويني", "نسبة الحضور", "تسليم الواجبات", "نشاط المنصة"]
-            sizes = [40, 25, 20, 15]
+            sizes = [40, 30, 20, 10]
             colors = ["#1A365D", "#2B6CB0", "#4299E1", "#90CDF4"]
             
-            wedges, texts, autotexts = ax.pie(
-                sizes, labels=labels, autopct='%1.0f%%', startangle=90, 
-                colors=colors, textprops=dict(fontsize=8, fontweight='bold')
-            )
+            ax.pie(sizes, labels=labels, autopct='%1.0f%%', startangle=90, colors=colors, textprops=dict(fontsize=8, fontweight='bold'))
             centre_circle = plt.Circle((0,0), 0.55, fc='white')
             fig.gca().add_artist(centre_circle)
             ax.axis('equal')
@@ -424,8 +437,8 @@ elif st.session_state.step == "evaluating":
             st.pyplot(fig)
 
         elif group_code == "G3":
-            st.subheader("التفسير التفصيلي الفردي للطالب (G3 - Local SHAP)")
-            st.info(f"المخطط أدناه يوضح تحليل المساهمة الفردية الخاصة بـ {student['name']} محلياً:")
+            st.subheader("التفسير التفصيلي الفردي (G3 - Local SHAP)")
+            st.info(f"المخطط أدناه يوضح تحليل المساهمة الفردية الخاصة بـ {student['name']}:")
             
             fig, ax = plt.subplots(figsize=(4.2, 2.4))
             contrib_dict = student["contributions"]
@@ -438,7 +451,7 @@ elif st.session_state.step == "evaluating":
             ax.set_yticks(y_pos)
             ax.set_yticklabels(feats, fontsize=8, fontweight='bold')
             ax.axvline(0, color="black", linewidth=0.8, linestyle="--")
-            ax.set_xlabel("تأثير المؤشر الفردي على القرار (+ إيجابي / - سلبي)", fontsize=8)
+            ax.set_xlabel("تأثير المؤشر على القرار (+ إيجابي / - سلبي)", fontsize=8)
             ax.tick_params(axis='both', labelsize=8)
             fig.tight_layout()
             st.pyplot(fig)
@@ -446,47 +459,31 @@ elif st.session_state.step == "evaluating":
             st.success(f"{student['shap_text']}")
 
     st.markdown("<br>", unsafe_allow_html=True)
-    st.subheader("القرار التربوي للمعلم:")
+    st.subheader("⚖️ القرار التربوي للمعلم:")
     c1, c2 = st.columns(2)
 
     with c1:
-        if st.button("أوافق على قرار النظام", key=f"agree_{idx}", use_container_width=True):
+        if st.button("✅ أوافق على قرار النظام", key=f"agree_{idx}", use_container_width=True):
             st.session_state.decisions[student["id"]] = "أوافق"
             if idx + 1 < len(STUDENTS_DATA):
                 st.session_state.current_student += 1
             else:
-                st.session_state.current_student = len(STUDENTS_DATA)
                 st.session_state.step = "survey"
             st.rerun()
 
     with c2:
-        if st.button("أعدل القرار (الذكاء الاصطناعي مخطئ)", key=f"edit_{idx}", use_container_width=True):
+        if st.button("✏️ أعدل القرار (الذكاء الاصطناعي مخطئ)", key=f"edit_{idx}", use_container_width=True):
             st.session_state.decisions[student["id"]] = "أعدل"
             if idx + 1 < len(STUDENTS_DATA):
                 st.session_state.current_student += 1
             else:
-                st.session_state.current_student = len(STUDENTS_DATA)
                 st.session_state.step = "survey"
             st.rerun()
 
-    if is_researcher_mode:
-        st.markdown("---")
-        st.subheader("لوحة تحكم الباحثة (تظهر لكِ فقط عند استخدام الرابط الخاص):")
-        radio_key = f"admin_group_eval_{idx}"
-        if radio_key not in st.session_state or st.session_state[radio_key] != st.session_state.group:
-            st.session_state[radio_key] = st.session_state.group
 
-        st.radio(
-            "تغيير المجموعة الحالية للمعاينة:",
-            ["G1", "G2", "G3"],
-            key=radio_key,
-            on_change=on_group_radio_change,
-            args=(radio_key,)
-        )
-
-# -------------------------------------------------------------
-# 3️⃣ الشاشة الثالثة: الاستبيان النهائي لتعديل وقياس الشفافية والدقة (step == 'survey')
-# -------------------------------------------------------------
+# =============================================================
+# 7. الشاشة الثالثة: الاستبيان النهائي (step == 'survey')
+# =============================================================
 elif st.session_state.step == "survey":
     st.title("📝 الاستبيان النهائي: قياس الشفافية والدقة والثقة")
     st.markdown("---")
@@ -494,7 +491,7 @@ elif st.session_state.step == "survey":
     st.markdown(
         """
         <div style="background-color: #EDF2F7; padding: 14px; border-radius: 8px; border-right: 5px solid #2B6CB0; margin-bottom: 20px;">
-            <h4 style="color: #1A365D; margin-top:0;">دليل الإجابة من (1 إلى 5):</h4>
+            <h4 style="color: #1A365D; margin-top:0;">دليل الإجابة (من 1 إلى 5):</h4>
             <p style="font-size: 15px; color: #2D3748; margin: 0;">
                 <b>1</b> = غير موافق بشدة &nbsp;|&nbsp; 
                 <b>2</b> = غير موافق &nbsp;|&nbsp; 
@@ -522,49 +519,21 @@ elif st.session_state.step == "survey":
             submitted = st.form_submit_button("📤 إرسال نتائج التجربة والإنهاء")
 
             if submitted:
-                trap_correct = sum(1 for trap_id in ["S03", "S06", "S09"] if st.session_state.decisions.get(trap_id) == "أعدل")
-                trap_detection_score = round((trap_correct / 3) * 100, 2)
-
-                correct_answers = {
-                    "S01": "أوافق", "S02": "أوافق", "S03": "أعدل", "S04": "أوافق", "S05": "أوافق",
-                    "S06": "أعدل", "S07": "أوافق", "S08": "أوافق", "S09": "أعدل", "S10": "أوافق",
-                }
-                total_correct = sum(1 for sid, c_dec in correct_answers.items() if st.session_state.decisions.get(sid) == c_dec)
-                total_accuracy = round((total_correct / 10) * 100, 2)
-
-                res_data = {
-                    "exp_years": [st.session_state.get("exp_years", 0)],
-                    "subject": [st.session_state.get("subject", "")],
-                    "group": [st.session_state.get("group", "G1")],
-                    "S01_decision": [st.session_state.decisions.get("S01", "")],
-                    "S02_decision": [st.session_state.decisions.get("S02", "")],
-                    "S03_decision": [st.session_state.decisions.get("S03", "")],
-                    "S04_decision": [st.session_state.decisions.get("S04", "")],
-                    "S05_decision": [st.session_state.decisions.get("S05", "")],
-                    "S06_decision": [st.session_state.decisions.get("S06", "")],
-                    "S07_decision": [st.session_state.decisions.get("S07", "")],
-                    "S08_decision": [st.session_state.decisions.get("S08", "")],
-                    "S09_decision": [st.session_state.decisions.get("S09", "")],
-                    "S10_decision": [st.session_state.decisions.get("S10", "")],
-                    "trap_detection_score": [trap_detection_score],
-                    "total_accuracy": [total_accuracy],
-                    "ait_score": [(ait1 + ait2) / 2],
-                    "trust_score": [(tr1 + tr2) / 2],
-                }
-                res_df = pd.DataFrame(res_data)
-
-                if os.path.exists(RESPONSES_FILE):
-                    res_df.to_csv(RESPONSES_FILE, mode="a", header=False, index=False, encoding="utf-8-sig")
-                else:
-                    res_df.to_csv(RESPONSES_FILE, index=False, encoding="utf-8-sig")
-
+                save_teacher_responses(
+                    st.session_state.get("exp_years", 5),
+                    st.session_state.get("subject", "غير محدد"),
+                    st.session_state.group,
+                    st.session_state.decisions,
+                    {"ait_score": (ait1 + ait2) / 2, "trust_score": (tr1 + tr2) / 2}
+                )
                 st.session_state.survey_submitted = True
                 st.session_state.step = "completed"
                 st.rerun()
 
-# -------------------------------------------------------------
-# 4️⃣ الشاشة الأخيرة: شكر وتنزيل البيانات (step == 'completed')
-# -------------------------------------------------------------
+
+# =============================================================
+# 8. الشاشة الأخيرة: الشكر وتنزيل البيانات (step == 'completed')
+# =============================================================
 elif st.session_state.step == "completed":
     st.balloons()
     st.success("🎉 تم إرسال وحفظ نتائج التجربة بنجاح!")
@@ -575,14 +544,14 @@ elif st.session_state.step == "completed":
 
     if is_researcher_mode:
         st.markdown("---")
-        with st.expander("لوحة تحميل البيانات (خاصة بالباحثة فقط)"):
-            pwd = st.text_input("أدخلي رمز الدخول الخاص بالباحثة لتنزيل الملفات:", type="password", key="admin_pwd_download")
+        with st.expander("📥 لوحة تنزيل بيانات الاستجابات (خاصة بالباحثة فقط)"):
+            pwd = st.text_input("أدخلي رمز دخول الباحثة لتنزيل الملف:", type="password", key="admin_pwd_download")
             if pwd == "1234":
-                st.success("تم التحقق بنجاح")
+                st.success("تم التثبت بنجاح")
                 if os.path.exists(RESPONSES_FILE):
                     with open(RESPONSES_FILE, "rb") as f:
                         st.download_button(
-                            label="تنزيل ملف استجابات المعلمين (CSV)",
+                            label="💾 تنزيل ملف استجابات المعلمين (teachers_responses.csv)",
                             data=f,
                             file_name=RESPONSES_FILE,
                             mime="text/csv",
@@ -591,4 +560,4 @@ elif st.session_state.step == "completed":
                 else:
                     st.info("لا توجد استجابات مسجلة حتى الآن.")
             elif pwd != "":
-                st.error("رمز الدخول غير صحيح")
+                st.error("الرمز غير صحيح")
